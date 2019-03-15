@@ -6,10 +6,14 @@ import Car
 
 class Road:
     Cross = {}
+    Weight = {}
 
     def __init__(self, id, len, vmax, chanCount, startID, endID, isBothway):
-        self.id = id
+        self.ID = id
         self.len = len
+        # 权重默认为长度
+        self.Weight[startID] = len
+        self.Weight[endID] = len
         self.vmax = vmax
         self.chanCount = chanCount
         self.startID = startID
@@ -24,8 +28,8 @@ class Road:
 
         # print("")
 
-    def InitCross(self, crossID, cross):
-        self.Cross[crossID] = cross
+    def InitCross(self, ID, cross):
+        self.Cross[ID] = cross
 
     # 返回车道数据 index 从1开始
     def GetChannel(self, dir, index):
@@ -33,6 +37,10 @@ class Road:
             logging.error("index wrong")
             return
         return self.channels[dir][index-1]
+
+    def GetWeight(self,Dir):
+        # TODO 此处权值需要重新计算
+        return self.Weight[Dir]
 
     def GetLane(self,dir):
         return self.channels[dir]

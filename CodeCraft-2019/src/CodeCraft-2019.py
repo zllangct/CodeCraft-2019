@@ -19,10 +19,10 @@ def main():
     # cross_path = sys.argv[3]
     # answer_path = sys.argv[4]
 
-    car_path = "./CodeCraft-2019/config/car.txt"
-    road_path = "./CodeCraft-2019/config/road.txt"
-    cross_path = "./CodeCraft-2019/config/cross.txt"
-    answer_path = "./CodeCraft-2019/config/answer.txt"
+    car_path = "./config/car.txt"
+    road_path = "./config/road.txt"
+    cross_path = "./config/cross.txt"
+    answer_path = "./config/answer.txt"
 
     logging.info("car_path is %s" % (car_path))
     logging.info("road_path is %s" % (road_path))

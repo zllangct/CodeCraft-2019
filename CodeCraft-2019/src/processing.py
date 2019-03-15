@@ -1,7 +1,7 @@
 # _*_ coding: utf-8 _*_ 
 import textio
 from golablData import GlobalData
-
+import CrossMap,dijkstra
 
 def Process(car_path,road_path,cross_path,answer_path):
     print("program start...")
@@ -14,18 +14,23 @@ def Process(car_path,road_path,cross_path,answer_path):
     for road in GlobalData.roads:
         count = 0
         for cross in GlobalData.crosses:
-            if cross.crossID== road.startID:
-                road.InitCross(cross.crossID,cross)
+            if cross.ID== road.startID:
+                road.InitCross(cross.ID,cross)
                 cross.InitRoad(road.startID,road)
                 count+=1
-            elif cross.crossID==road.endID:
-                road.InitCross(cross.crossID,cross)
+            elif cross.ID==road.endID:
+                road.InitCross(cross.ID,cross)
                 cross.InitRoad(road.endID,road)
                 count +=1
 
             if count >=2:
                 break
 
+    GlobalData.Map=CrossMap.CrossMap(GlobalData.crosses)
+    
+    # calculate distance
+    GlobalData.DistancePre = dijkstra.CalDistance(GlobalData.Map) 
+    
     # Main logic loop 
     GlobalData.state = 1
     frameCount = 0
