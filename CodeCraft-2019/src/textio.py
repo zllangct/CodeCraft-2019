@@ -1,7 +1,7 @@
 # _*_ coding: utf-8 _*_ 
 import io,sys,os,re 
 import numpy as np
-import globalDefine
+import Car,Road,Cross
 
 
 class TextIO:
@@ -28,7 +28,7 @@ class TextIO:
                 if line.startswith("#"):
                     continue
                 args=[item for item in filter(lambda x:x!='',re.split("[(),\n]",line)) ]
-                car = globalDefine.Car(int(args[0]),int(args[1]),int(args[2]),int(args[3]),int(args[4]))
+                car = Car.Car(int(args[0]),int(args[1]),int(args[2]),int(args[3]),int(args[4]))
                 cars.append(car)
 
         # Read road data 
@@ -38,9 +38,9 @@ class TextIO:
                 if line.startswith("#"):
                     continue
                 args=[item for item in filter(lambda x:x!='',re.split("[(),\n]",line)) ]
-                road = globalDefine.Road(int(args[0]),int(args[1]),int(args[2]),int(args[3]),int(args[4]),int(args[5]),int(args[6]))
+                road = Road.Road(int(args[0]),int(args[1]),int(args[2]),int(args[3]),int(args[4]),int(args[5]),int(args[6]))
                 roads.append(road)
-
+ 
         # Read cross data 
         with open(self.path_cross,"r") as f1:
             lines=f1.readlines()
@@ -48,12 +48,12 @@ class TextIO:
                 if line.startswith("#"):
                     continue
                 args=[item for item in filter(lambda x:x!='',re.split("[(),\n]",line)) ]
-                cross = globalDefine.Cross(int(args[0]),int(args[1]),int(args[2]),int(args[3]),int(args[4]))
+                cross = Cross.Cross(int(args[0]),int(args[1]),int(args[2]),int(args[3]),int(args[4]))
                 crosses.append(cross)
 
         return roads,cars,crosses
 
     def Write(self):
         print("Write data")
-        
+
     
