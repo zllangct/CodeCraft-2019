@@ -34,6 +34,9 @@ class Road:
             return
         return self.channels[dir][index-1]
 
+    def GetLane(self,dir):
+        return self.channels[dir]
+
     def MaxV(self, car):
         return min(car.vmax, self.vmax)
 
