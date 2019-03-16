@@ -12,8 +12,7 @@ class CarState:
 class Car:
     # CurrentRoad = None
     # CurrentChannel = None
-    Path=None
-    PathPassing = list([])
+    
     
     def __init__(self,id,start,end,vmax,ptime):
         self.id=id
@@ -23,5 +22,7 @@ class Car:
         self.ptime=ptime
 
         self.state = CarState.Null
-
+        self.Path=None
+        self.PathPassing = list([])
+        
     # def NextRoad(self,cross):

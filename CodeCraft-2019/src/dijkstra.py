@@ -5,12 +5,14 @@ def Dijkstra(G,source,INF=99999):
     minv = source.ID
     
     dis = dict((k,INF) for k in G.keys())
-    dis[source] = 0
+    dis[source.ID] = 0
     
     while len(book)<len(G):
         book.add(minv)                                 
-        for crossID,_ in G[minv].GetNeighbor():              
-            weight = source.GetRoadLength(crossID)         
+        for crossID in G[minv].GetNeighbor():              
+            weight = G[minv].GetRoadLength(crossID)
+            if weight ==None:
+                weight =INF     
             if dis[minv] + weight < dis[crossID]:         
                 dis[crossID] = dis[minv] + weight        
         
@@ -24,6 +26,7 @@ def Dijkstra(G,source,INF=99999):
 
 def CalDistance(G):
     res={}
-    for crossID,cross in G:
-        res[crossID] = Dijkstra(G,cross)
+    for crossID in G.Crosses.keys():
+        print(crossID)
+        res[crossID] = Dijkstra(G.Crosses,G[crossID])
     return res

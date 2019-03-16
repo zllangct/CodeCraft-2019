@@ -15,7 +15,7 @@
             "name": "Python: Main (Integrated Terminal)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/CodeCraft-2019/src/CodeCraft-2019.py",
+            "program": "${workspaceFolder}/src/CodeCraft-2019.py",
             "console": "integratedTerminal"
         },
         {

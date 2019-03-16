@@ -4,20 +4,23 @@ import logging
            
 
 class Cross:
-    Roads = None
-    RoadIDs = None
-    Neighbor = None
+    
     def __init__(self,ID,road1,road2,road3,road4):
         self.ID=ID
         self.RoadIDs = list([])
-        self.RoadIDs.append(road1).append(road2).append(road3).append(road4)
+        self.RoadIDs.append(road1)
+        self.RoadIDs.append(road2)
+        self.RoadIDs.append(road3)
+        self.RoadIDs.append(road4)
 
+        self.Roads = None
+        self.Neighbor = None
     # 初始化道路对象
     def InitRoad(self,roadID,road):
         if self.Roads == None:
             self.Roads={}
 
-        self.Roads[roadID,road]
+        self.Roads[roadID]=road
 
     def GetRoad(self,roadID):
         if roadID in self.RoadIDs:
@@ -28,13 +31,18 @@ class Cross:
     def GetNeighbor(self):
         if self.Neighbor == None:
             self.Neighbor={}
-            for road in self.Roads:
+            for roadID in self.Roads.keys():
+                road=self.Roads[roadID]
                 if road.startID == self.ID:
-                    self.Neighbor[road.endID]=road.Cross[road.endID]
+                    self.Neighbor[roadID]=road.Cross[road.endID]
+                elif road.endID == self.ID and road.isBothway==1:
+                    self.Neighbor[roadID]=road.Cross[road.startID]
+
         return self.Neighbor
     
     def GetRoadLength(self,targetID):
-        for road in self.Roads:
-                if road.endID == targetID:
-                    return road.GetWeight(targetID)
-        
+        for roadID in self.Roads:
+            road=self.Roads[roadID]
+            if road.endID == targetID or (road.startID == targetID and road.isBothway ==1):
+                return road.GetWeight(targetID)
+    

@@ -1,9 +1,8 @@
 # _*_ coding: utf-8 _*_
 
 class CrossMap:
-    Crosses={}
-
     def __init__(self,crosses=None):
+        self.Crosses={}
         if crosses != None:
             for cross in crosses:
                 self.AddCross(cross)

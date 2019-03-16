@@ -15,15 +15,17 @@ def Process(car_path,road_path,cross_path,answer_path):
         count = 0
         for cross in GlobalData.crosses:
             if cross.ID== road.startID:
-                road.InitCross(cross.ID,cross)
-                cross.InitRoad(road.startID,road)
-                count+=1
+                cross.InitRoad(road.endID,road)
+                if road.isBothway==1:
+                    road.InitCross(cross.ID,cross)
+                    count+=1
             elif cross.ID==road.endID:
                 road.InitCross(cross.ID,cross)
-                cross.InitRoad(road.endID,road)
+                if road.isBothway==1:
+                    cross.InitRoad(road.startID,road)
                 count +=1
 
-            if count >=2:
+            if (road.isBothway==1 and count >=2) or (road.isBothway==0 and count>=1):
                 break
 
     GlobalData.Map=CrossMap.CrossMap(GlobalData.crosses)

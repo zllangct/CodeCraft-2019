@@ -5,10 +5,10 @@ import Car
 
 
 class Road:
-    Cross = {}
-    Weight = {}
-
     def __init__(self, id, len, vmax, chanCount, startID, endID, isBothway):
+        self.Cross = {}
+        self.Weight = {}
+        
         self.ID = id
         self.len = len
         # 权重默认为长度
@@ -19,6 +19,8 @@ class Road:
         self.startID = startID
         self.endID = endID
         self.isBothway = isBothway
+        
+        
 
         # 初始化车道里面的车车
         self.channels = {self.startID: list([]), self.endID: list([])}
