@@ -53,7 +53,16 @@ class TextIO:
 
         return roads,cars,crosses
 
-    def Write(self):
+    def Write(self,answer):
         print("Write data")
-
-    
+        with open(self.path_out,"wt") as f:
+            for line in answer:
+                sstr =[]
+                for c in line:
+                    if len(sstr)==0 :
+                        sstr = sstr+c
+                    else:
+                        sstr = sstr+","
+                        sstr = sstr+c
+                sstr = "("+ sstr+")"
+                f.write(sstr)

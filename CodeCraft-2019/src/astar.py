@@ -4,7 +4,10 @@ from heapq import heappush, heappop
 from itertools import count
 import golablData
 
-def astar(Map, source, target, heuristic=None):
+def Heuristic(currentCross,target):
+    return golablData.GlobalData.DistancePre[currentCross.ID][target.ID]
+
+def astar(Map, source, target, heuristic=Heuristic):
 
     if heuristic is None:
         heuristic = lambda u, v:0
@@ -56,5 +59,3 @@ def astar_path_length(Map, source, target, heuristic=None):
         length+=path[i].GetRoadLength(path[i+1].ID)
     return length
 
-def Heuristic(currentCross,target):
-    return golablData.GlobalData.DistancePre[currentCross.ID][target.ID]

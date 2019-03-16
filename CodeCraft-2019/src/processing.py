@@ -32,7 +32,16 @@ def Process(car_path,road_path,cross_path,answer_path):
     
     # calculate distance
     GlobalData.DistancePre = dijkstra.CalDistance(GlobalData.Map) 
-    
+
+    # cars enter garage
+    for car in GlobalData.cars:
+        start = car.GetStart()
+        start.EnterGarage(car)
+
+    # garage sort
+    for cross in GlobalData.crosses:
+        cross.GarageSort()
+
     # Main logic loop 
     GlobalData.state = 1
     frameCount = 0
@@ -42,22 +51,29 @@ def Process(car_path,road_path,cross_path,answer_path):
         Frame()
         
     # Write output data
+    input.Write(GlobalData.Result)
+
 
 def Frame():
-    print("Current frame:",GlobalData.CurrentTime)
+    print("Current frame:"+GlobalData.CurrentTime)
     
-    # HandleRoad()
-    # HandleCross()
-    # HandleGarage()
+    HandleRoad()
+    HandleCross()
+    HandleGarage()
     
 
-# def HandleRoad():
-#     print(timeFrame)
-#     # for road in GlobalData.roads:
+def HandleRoad():
+    print("handle roads")
+    for road in GlobalData.roads:
+        road.CarRun()
         
 
-# def HandleCross():
-#     print()
+def HandleCross():
+    print("handle cross")
+    for cross in GlobalData.crosses:
+        cross.CarRun()
 
-# def HandleGarage():
-#     print()
+def HandleGarage():
+    print("handle garage")
+    for cross in GlobalData.crosses:
+        cross.GoRoad()
