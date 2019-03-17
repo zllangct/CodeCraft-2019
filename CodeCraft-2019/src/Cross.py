@@ -20,7 +20,7 @@ class Cross:
         0:{1:1,0:2,2:3},
         1:{1:2,0:3,2:0},
         2:{1:3,0:0,2:1},
-        3:{1:1,2:0,2:2},
+        3:{1:0,0:1,2:2},
     }
     def __init__(self,ID,road1,road2,road3,road4):
         self.ID=ID
@@ -45,10 +45,10 @@ class Cross:
         self.Garage.append(car)
 
     def sortkey(self,item):
-        return item.ptime
+        return (item.ptime,item.id)
 
     def GarageSort(self):
-        self.Garage=self.Garage.sort(key=self.sortkey)
+        self.Garage.sort(key=self.sortkey,reverse=True)
 
     def GetRoad(self,roadID):
         if roadID in self.RoadIDs:
@@ -80,87 +80,149 @@ class Cross:
         return self.I2Dir[index_source][index_target]
 
     def GetRoadByEndID(self,crossID):
-        for road in self.Roads:
+        for road in self.Roads.values():
             if road.endID == crossID or road.isBothway == 1 and road.startID == crossID:
+                return road
+        return None
+
+    def GetRoadByRoadID(self,roadID):
+        for road in self.Roads.values():
+            if road.ID == roadID:
                 return road
         return None
 
     def GetRoadByDir(self,currentRoadID,dir):
         index_source = self.RoadIDs.index(currentRoadID)
         index_target = self.Dir2I[index_source][dir]
-        return self.Roads[self.RoadIDs[index_target]]
-
-    def ThroughCross(self,car,restLength,sourceRoad,targetRoad):
-        # 下一段路可行驶的最大路程
-        maxLen= targetRoad.MaxV(car)-restLength
-        return targetRoad.CarEnter(car,maxLen)
+        id = self.RoadIDs[index_target]
+        if id == -1:
+            return None
+        for road in self.Roads.values():
+            if road.ID == id:
+                return road
 
     def CarRun(self):
-        roadList = list(self.RoadIDs.sort(reverse=True))
-        # 从小到大遍历道路
-        while len(roadList)>0:
-            for roadIndex in roadList:
-                road=self.Roads[roadIndex]
-                # 获取调度车辆 
-                car_waiting,restLength,chan,out = road.GetCarWaiting(self.ID)
-                if car_waiting == None:
-                    roadList.pop(roadIndex)
-                    continue
-                if not out:
-                    road.Move(car_waiting,road.len-restLength,road.MaxV(car_waiting),chan)
-                    car_waiting.state = Car.CarState.ActionEnd
-                    continue
+        roadList =sorted(list(self.RoadIDs))
+        handleLen=len(self.Roads)
+        handledList=list([])
+       
+        
 
-                targetRoad,end =car_waiting.NextRoad() 
-                if end :
-                    chan[road.len-restLength]=None
-                    car_waiting.state = Car.CarState.ActionEnd
-                    car_waiting.isComplate=True
-                    golablData.GlobalData.CarComplate(car_waiting)
-                targetRoadID = targetRoad.ID
-                direction = self.GetDir(road.ID, targetRoadID)
-                # 检查冲突车辆
-                if direction == self.D:
-                    # 直行，优先不用检查
+        # 从小到大遍历道路
+        while handleLen>0:
+            for roadIndex in range(0,len(roadList)):
+                roadID = roadList[roadIndex]
+                if roadID == 5000:
                     pass
-                elif direction == self.L:
-                    # 左转，检查直行车辆
-                    roadR = self.GetRoadByDir(road.ID,self.R)
-                    if roadR.CheckingOutDir(self.ID,targetRoadID):
-                        # 如果有冲突，则暂时调度，切换到下一条道路
-                        continue
-                elif direction == self.R:
-                    # 右转，检查左方直行车辆
-                    roadL = self.GetRoadByDir(road.ID,self.L)
-                    if roadL.CheckingOutDir(self.ID,targetRoadID):
-                        # 如果有冲突，则暂时调度，切换到下一条道路
-                        continue
-                    # 检查前方左转车辆
-                    roadD = self.GetRoadByDir(road.ID,self.D)
-                    if roadL.CheckingOutDir(self.ID,targetRoadID):
-                        # 如果有冲突，则暂时调度，切换到下一条道路
-                        continue
-                # 没有冲突，行驶车辆 TODO
-                ok= self.ThroughCross(car_waiting,restLength,road,targetRoad)
-                if not ok :
+                   
+                if roadID == -1 or roadID in handledList:
                     continue
+                road=self.GetRoadByRoadID(roadID)
+                if road ==None:
+                    handleLen-=1
+                    handledList.append(roadID)
+                    continue
+                # 调度这条道路 
+                canRun = True
+                while canRun:
+                    # 获取调度车辆 
+                    car_waiting,restLength,chan,chanIndex = road.GetCarWaiting(self.ID)
+                    if car_waiting == None:
+                        handleLen-=1
+                        break
+           
+                    targetCross,end =car_waiting.NextRoad() 
+                    if end :
+                        chan[road.len-restLength-1]=None
+                        car_waiting.state = Car.CarState.ActionEnd
+                        car_waiting.isComplate=True
+                        if car_waiting.currentRoad != None:
+                            car_waiting.PathPassing.append(car_waiting.currentRoad)
+                            car_waiting.currentRoad = None
+                        golablData.GlobalData.CarComplate(car_waiting)
+                        continue
+
+                    targetRoad = self.GetRoadByEndID(targetCross.ID)
+                    targetRoadID = targetRoad.ID
+                    direction = self.GetDir(road.ID, targetRoadID)
+                    # 检查冲突车辆
+                    if direction == self.D:
+                        # 直行，优先不用检查
+                        pass
+                    elif direction == self.L:
+                        # 左转，检查直行车辆
+                        roadR = self.GetRoadByDir(road.ID,self.R)
+                        if roadR !=None and roadR.CheckingOutDir(self.ID,targetRoadID):
+                            # 如果有冲突，则暂时调度，切换到下一条道路
+                            break
+                    elif direction == self.R:
+                        # 右转，检查左方直行车辆
+                        roadL = self.GetRoadByDir(road.ID,self.L)
+                        if roadL!=None and roadL.CheckingOutDir(self.ID,targetRoadID):
+                            # 如果有冲突，则暂时调度，切换到下一条道路
+                            break
+                        # 检查前方左转车辆
+                        roadD = self.GetRoadByDir(road.ID,self.D)
+                        if roadD != None and roadD.CheckingOutDir(self.ID,targetRoadID):
+                            # 如果有冲突，则暂时调度，切换到下一条道路
+                            break
+                    # 没有冲突，行驶车辆,过路口
+                    tmaxv=targetRoad.MaxV(car_waiting)
+                    maxLen= tmaxv-restLength if tmaxv-restLength>0 else 0
+                    ok= targetRoad.CarEnter(car_waiting,maxLen,targetCross.ID)
+                    if not ok :
+                        # 过路口失败，说明对面车道拥堵，行驶到路口最后位置
+                        carIndex = road.len-restLength-1
+                        road.Move(car_waiting, carIndex, road.len-carIndex-1, chan)
+                        car_waiting.state = Car.CarState.ActionEnd
+                        break
+
+                    road.CarOut(self.ID,chanIndex,road.len-restLength-1)
+                    car_waiting.EnterNewRoad(targetRoad) 
 
         # 行驶剩余等待状态车辆
-        for road in self.Roads:
+        for road in self.Roads.values():
             road.RunRest(self)
 
-    def GoRoad(self):
-        canEnter =True
-        while len(self.Garage)>0 and self.Garage[0].ptime>=golablData.GlobalData.CurrentTime and canEnter:
-            car = self.Garage[0]
+    def GoRoad(self,count):
+        waitCars =list([])
+        roadCount = len(self.Roads)
+        roadBlock= list([])
+        now=0
+        while now < count and roadCount and len(self.Garage)>0 and self.Garage[-1].ptime<=golablData.GlobalData.CurrentTime:
+            car = self.Garage.pop(-1)
             # 规划路线
             car.PathPlanning(car.GetStart())
-            crossTemp = car.Path.pop(0)
-            if crossTemp.ID != self.ID:
-                logging.error("car go road wrong,invalid start cross") 
-                continue
+            crossTemp = car.Path[0]
+            
+            if crossTemp.ID == self.ID:
+                car.Path.pop(0)
+                crossTemp = car.Path[0]
+
             road = self.GetRoadByEndID(crossTemp.ID)
             if road == None:
                 logging.error("car go road wrong,invalid start cross")
                 continue
-            canEnter=road.CarEnter(car,road.MaxV(car))
+
+            if (road.ID in roadBlock):
+                waitCars.append(car)
+                continue
+
+            canEnter=road.CarEnter(car,road.MaxV(car),crossTemp.ID)
+            if not canEnter:
+                roadCount-=1
+                roadBlock.append(road.ID)
+                waitCars.append(car)
+                continue
+
+            car.EnterNewRoad(road)
+
+            now+=1
+
+        for w in waitCars[::-1]:
+            self.Garage.append(w)    
+        
+        if not "CarCount" in golablData.GlobalData.StateInfo["CrossInfo"]:
+            golablData.GlobalData.StateInfo["CrossInfo"]["CarCount"]={}
+
+        golablData.GlobalData.StateInfo["CrossInfo"]["CarCount"][self.ID] = len(self.Garage)

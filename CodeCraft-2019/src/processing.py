@@ -43,19 +43,51 @@ def Process(car_path,road_path,cross_path,answer_path):
         cross.GarageSort()
 
     # Main logic loop 
+    RunV = 0.0
+    CompPre = 0
+    CarMax = 0 
+
     GlobalData.state = 1
     frameCount = 0
     while GlobalData.state == 1:
         frameCount+=1
         GlobalData.CurrentTime=frameCount
         Frame()
+
         
+
+        # 信息统计
+        roadInfo = GlobalData.StateInfo["RoadInfo"]["CarCount"]
+        roadCarCount = 0
+        for _carCount in roadInfo.values():
+            roadCarCount+=_carCount
+        GlobalData.Car_Road = roadCarCount
+        print("当前道路中的车辆：%d" % roadCarCount)
+
+        crossInfo = GlobalData.StateInfo["CrossInfo"]["CarCount"]
+        crossCarCount = 0
+        for _carCount in crossInfo.values():
+            crossCarCount+=_carCount
+        GlobalData.Car_Garage =crossCarCount
+
+
+        print("车库中的车辆：%d" % crossCarCount)
+
+        print("到达终点车辆：%d"%GlobalData.ComplateCount)
+
+        v = GlobalData.ComplateCount-CompPre
+        if v > RunV:
+            CarMax = roadCarCount
+            RunV = v
+        CompPre = GlobalData.ComplateCount
+
+        print("到达量：%d  最大值：%d  最大值时道路承载量：%d"%(v,RunV,CarMax))
     # Write output data
     input.Write(GlobalData.Result)
 
 
 def Frame():
-    print("Current frame:"+GlobalData.CurrentTime)
+    print("Current frame:"+str(GlobalData.CurrentTime))
     
     HandleRoad()
     HandleCross()
@@ -63,17 +95,22 @@ def Frame():
     
 
 def HandleRoad():
-    print("handle roads")
+    # print("handle roads")
     for road in GlobalData.roads:
         road.CarRun()
         
 
 def HandleCross():
-    print("handle cross")
+    
     for cross in GlobalData.crosses:
         cross.CarRun()
 
 def HandleGarage():
-    print("handle garage")
+    max = 1000 - GlobalData.Car_Road
+    if max <0 :
+        max =0
+
+    every = int(max / 64.0)
+
     for cross in GlobalData.crosses:
-        cross.GoRoad()
+        cross.GoRoad(every)

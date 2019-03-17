@@ -27,6 +27,5 @@ def Dijkstra(G,source,INF=99999):
 def CalDistance(G):
     res={}
     for crossID in G.Crosses.keys():
-        print(crossID)
         res[crossID] = Dijkstra(G.Crosses,G[crossID])
     return res
