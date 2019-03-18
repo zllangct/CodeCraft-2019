@@ -46,9 +46,12 @@ class Road:
             return
         return self.channels[dir][index]
 
-    def GetWeight(self,Dir):
-        # TODO 此处权值需要重新计算
-        return self.Weight[Dir]
+    def GetWeight(self,source,target):
+        initWeight = self.len       
+        if self.CarCount[target.ID] > self.len*self.chanCount / 2:
+            initWeight += int(self.len / 2)
+
+        return self.Weight[target.ID]
 
     def RoadPrint(self,dir,temp=False):
         if not golablData.GlobalData.Debug and not temp:
@@ -79,7 +82,9 @@ class Road:
 
     def CheckingFrontCross(self, car, index, chan):
         if self.MaxV(car) + index >= self.len:
+            car.location="cross"
             return True
+        car.location="road"
         return False
 
     def Move(self, car, index, s, chan):
@@ -91,6 +96,7 @@ class Road:
         #     print("car %d move : %d" %(car.id,s))
         chan[index] = None
         chan[index+s] = car
+        car.CarAction("normal")
 
     def CarRun(self):
         # 遍历双向车道
@@ -191,7 +197,7 @@ class Road:
                 car = chan[carIndex]
                 if car != None and car.state == Car.CarState.WaitingRun:
                     if self.CheckingFrontCross(car,carIndex,chan):
-                        nextCross,end=car.NextRoad()
+                        nextCross,end=car.NextCross()
                         if nextCross !=None and nextCross.ID == dir and not end:
                             return True
                         else:

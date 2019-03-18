@@ -72,7 +72,7 @@ class Cross:
         for roadID in self.Roads:
             road=self.Roads[roadID]
             if road.endID == targetID or (road.startID == targetID and road.isBothway ==1):
-                return road.GetWeight(targetID)
+                return road.len
     
     def GetDir(self,currentRoadID,targetRoadID):
         index_source = self.RoadIDs.index(currentRoadID)
@@ -112,9 +112,6 @@ class Cross:
         while handleLen>0:
             for roadIndex in range(0,len(roadList)):
                 roadID = roadList[roadIndex]
-                if roadID == 5000:
-                    pass
-                   
                 if roadID == -1 or roadID in handledList:
                     continue
                 road=self.GetRoadByRoadID(roadID)
@@ -131,7 +128,7 @@ class Cross:
                         handleLen-=1
                         break
            
-                    targetCross,end =car_waiting.NextRoad() 
+                    targetCross,end =car_waiting.NextCross() 
                     if end :
                         chan[road.len-restLength-1]=None
                         car_waiting.state = Car.CarState.ActionEnd
@@ -141,6 +138,9 @@ class Cross:
                             car_waiting.currentRoad = None
                         golablData.GlobalData.CarComplate(car_waiting)
                         continue
+                    if targetCross.ID == self.ID:
+                        car_waiting.Path.pop(0)
+                        targetCross,end =car_waiting.NextCross()
 
                     targetRoad = self.GetRoadByEndID(targetCross.ID)
                     targetRoadID = targetRoad.ID
@@ -174,6 +174,8 @@ class Cross:
                         # 过路口失败，说明对面车道拥堵，行驶到路口最后位置
                         carIndex = road.len-restLength-1
                         road.Move(car_waiting, carIndex, road.len-carIndex-1, chan)
+                        if road.len-carIndex-1 == 0:
+                            car_waiting.CarAction("wait")
                         car_waiting.state = Car.CarState.ActionEnd
                         break
 
@@ -194,7 +196,8 @@ class Cross:
             # 规划路线
             car.PathPlanning(car.GetStart())
             crossTemp = car.Path[0]
-            
+            car.CurrentCross = self
+
             if crossTemp.ID == self.ID:
                 car.Path.pop(0)
                 crossTemp = car.Path[0]
@@ -216,7 +219,7 @@ class Cross:
                 continue
 
             car.EnterNewRoad(road)
-
+            car.location = "road"
             now+=1
 
         for w in waitCars[::-1]:

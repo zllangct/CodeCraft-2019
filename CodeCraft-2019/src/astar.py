@@ -8,7 +8,7 @@ import Road,Cross
 def Heuristic(currentCross,target):
     return golablData.GlobalData.DistancePre[currentCross.ID][target.ID]
 
-def astar(Map, source, target, heuristic=Heuristic):
+def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
 
     if heuristic is None:
         heuristic = lambda u, v:0
@@ -31,10 +31,11 @@ def astar(Map, source, target, heuristic=Heuristic):
                 node = explored[node]
             path.reverse()
             
+           
+            sstr=""
+            for p in path:
+                sstr+=" "+str(p.ID)
             if golablData.GlobalData.Debug:
-                sstr=""
-                for p in path:
-                    sstr+=" "+str(p.ID)
                 print(sstr)
 
             return path
@@ -58,7 +59,23 @@ def astar(Map, source, target, heuristic=Heuristic):
         for cross in curnode.GetNeighbor().values():
             if cross in explored:
                 continue
-            ncost = dist + cross.GetRoadByEndID(cross.ID).GetWeight(cross.ID)
+            road= curnode.GetRoadByEndID(cross.ID)
+            unique = 0
+            if carUnique != None: 
+                if "block" in carUnique:
+                   
+                    if 5033 in carUnique["block"]:
+                        print("")
+                    if road.ID in carUnique["block"]:
+                        unique += 1000
+                # elif "slow" in carUnique:
+            if car.currentRoad!=None :
+                if road.ID == car.currentRoad.ID :
+                    unique+=1000
+                if road.isBothway == 0:
+                    unique+50
+
+            ncost = dist + road.GetWeight(curnode,cross) + unique
             if cross in enqueued:
                 qcost, h = enqueued[cross]
                 if qcost <= ncost:
