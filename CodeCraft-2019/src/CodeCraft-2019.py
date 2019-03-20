@@ -8,7 +8,6 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S',
                     filemode='a')
 
-
 def main():
     # if len(sys.argv) != 5:
     #     logging.info('please input args: car_path, road_path, cross_path, answerPath')

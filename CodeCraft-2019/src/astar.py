@@ -63,19 +63,18 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
             unique = 0
             if carUnique != None: 
                 if "block" in carUnique:
-                   
-                    if 5033 in carUnique["block"]:
-                        print("")
                     if road.ID in carUnique["block"]:
+                        continue
+
+                if "congestion" in carUnique:
+                    if road.ID in carUnique["congestion"]:
                         unique += 1000
-                # elif "slow" in carUnique:
+
             if car.currentRoad!=None :
                 if road.ID == car.currentRoad.ID :
-                    unique+=1000
-                if road.isBothway == 0:
-                    unique+50
+                    continue
 
-            ncost = dist + road.GetWeight(curnode,cross) + unique
+            ncost = dist + road.GetWeight(curnode,cross,car) + unique
             if cross in enqueued:
                 qcost, h = enqueued[cross]
                 if qcost <= ncost:

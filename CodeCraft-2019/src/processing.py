@@ -2,6 +2,7 @@
 import textio
 from golablData import GlobalData
 import CrossMap,dijkstra
+import time
 
 def Process(car_path,road_path,cross_path,answer_path):
     print("program start...")
@@ -49,6 +50,7 @@ def Process(car_path,road_path,cross_path,answer_path):
 
     GlobalData.state = 1
     frameCount = 0
+    startTime = time.time()
     while GlobalData.state == 1:
         frameCount+=1
         GlobalData.CurrentTime=frameCount
@@ -81,7 +83,9 @@ def Process(car_path,road_path,cross_path,answer_path):
             RunV = v
         CompPre = GlobalData.ComplateCount
 
-        print("到达量：%d  最大值：%d  最大值时道路承载量：%d"%(v,RunV,CarMax))
+        print("到达量：%d  最大值：%d  最大值时道路承载量：%d  车辆综合检查: %d"%(v,RunV,CarMax,roadCarCount+crossCarCount+GlobalData.ComplateCount))
+
+        print("程序运行时间：%f" % time.time().__sub__(startTime))
     # Write output data
     input.Write(GlobalData.Result)
 
@@ -106,8 +110,8 @@ def HandleCross():
         cross.CarRun()
 
 def HandleGarage():
-    max = 2000 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 2000:
+    max = 4000 - GlobalData.Car_Road
+    if GlobalData.Car_Road > 1000:
         max =0  
     else:   
         if max <=0 :
@@ -115,7 +119,7 @@ def HandleGarage():
 
     every = int(max / 64.0)
 
-    # every = 1
+    every = 5000
 
     for cross in GlobalData.crosses:
         cross.GoRoad(every)
