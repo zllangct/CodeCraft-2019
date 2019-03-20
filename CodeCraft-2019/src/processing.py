@@ -111,7 +111,7 @@ def HandleCross():
 
 def HandleGarage():
     max = 4000 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 1000:
+    if GlobalData.Car_Road > 2000:
         max =0  
     else:   
         if max <=0 :
@@ -119,7 +119,7 @@ def HandleGarage():
 
     every = int(max / 64.0)
 
-    every = 5000
+    # every = 5000
 
     for cross in GlobalData.crosses:
         cross.GoRoad(every)

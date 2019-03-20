@@ -68,7 +68,7 @@ class Road:
     # 计算道路权值
     def GetWeight(self,source,target,car):
         # 初始权值
-        initWeight = self.len
+        initWeight = self.len*2
 
         # 承载量
         if self.CarCount[target.ID] > self.len*self.chanCount * 0.6:
@@ -257,7 +257,7 @@ class Road:
                 car = chan[self.len-row-1]
                 # 停止状态的车道 或者 有不出路口的首车 此车道不再遍历
                 if car != None :
-                    if car.state == Car.CarState.ActionEnd or not self.CheckingFrontCross(car,self.len-row,chan):
+                    if car.state == Car.CarState.ActionEnd :
                         skip.append(index)
                         continue
                     elif car.state == Car.CarState.WaitingRun:

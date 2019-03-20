@@ -91,17 +91,27 @@ class Car:
                     
                 self.waitingTime=0
 
-            if len(self.vpassing) > 4 and self.vaverage < 1.5:               
+            # if len(self.vpassing) > 4 and self.vaverage < 1.5 :               
                 
-                nextRoad= self.NextRoad() 
-                if nextRoad ==None:
-                    return
+            #     nextRoad= self.NextRoad() 
+            #     if nextRoad ==None:
+            #         return
+            #     self.AddBlocking(nextRoad.ID)
+            #     self.PathPlanning(self.CurrentCross,True)
+
+            #     self.uniqueInfo["block"]=[]
+            #     self.uniqueInfo["congestion"]=[]
+
+            nextRoad= self.NextRoad() 
+            nextNode,end=self.NextCross()
+            if end or nextRoad ==None:
+                return
+            if nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
                 self.AddBlocking(nextRoad.ID)
                 self.PathPlanning(self.CurrentCross,True)
 
                 self.uniqueInfo["block"]=[]
                 self.uniqueInfo["congestion"]=[]
-
 
     def GetStart(self):
         if self.start == None:
@@ -118,7 +128,10 @@ class Car:
         if self.Path ==None or rePlan:
             if len(self.PathPassing)>0:
                 self.AddBlocking(self.PathPassing[-1].ID)
-            self.Path = astar.astar(golablData.GlobalData.Map,currentCross,self.GetEnd(),self,self.uniqueInfo)
+            p = astar.astar(golablData.GlobalData.Map,currentCross,self.GetEnd(),self,self.uniqueInfo)
+            if p ==None:
+                return
+            self.Path= p 
             self.PathTemp.append(self.Path.copy())
             p=False
             if p:

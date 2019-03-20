@@ -132,10 +132,12 @@ class Cross:
                     if end :
                         chan[road.len-restLength-1]=None
                         car_waiting.ChangeState(Car.CarState.ActionEnd)
-                        car_waiting.isComplate=True
+                        car_waiting.isComplate=True                        
                         if car_waiting.currentRoad != None:
                             car_waiting.PathPassing.append(car_waiting.currentRoad)
+                            car_waiting.currentRoad.CarCount[self.ID]-=1
                             car_waiting.currentRoad = None
+                            
                         golablData.GlobalData.CarComplate(car_waiting)
                         continue
                     if targetCross.ID == self.ID:
@@ -143,7 +145,35 @@ class Cross:
                         targetCross,end =car_waiting.NextCross()
 
                     targetRoad = self.GetRoadByEndID(targetCross.ID)
+
+                    if targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 3:
+                        car_waiting.AddBlocking(targetRoad.ID)
+                        car_waiting.PathPlanning(car_waiting.CurrentCross,True)
+
+                        
+                        car_waiting.uniqueInfo["block"]=[]
+                        car_waiting.uniqueInfo["congestion"]=[]
+
+                        targetCross,end =car_waiting.NextCross() 
+                        if end :
+                            chan[road.len-restLength-1]=None
+                            car_waiting.ChangeState(Car.CarState.ActionEnd)
+                            car_waiting.isComplate=True
+                            if car_waiting.currentRoad != None:
+                                car_waiting.PathPassing.append(car_waiting.currentRoad)
+                                car_waiting.currentRoad = None
+                            golablData.GlobalData.CarComplate(car_waiting)
+                            continue
+
+                        if targetCross.ID == self.ID:
+                            car_waiting.Path.pop(0)
+                            targetCross,end =car_waiting.NextCross()
+
+                        targetRoad = self.GetRoadByEndID(targetCross.ID)
+
+
                     targetRoadID = targetRoad.ID
+
                     if road.ID == targetRoadID:
                         car_waiting.AddBlocking(road.ID)
                         car_waiting.CarAction("wait")
@@ -153,6 +183,7 @@ class Cross:
                         car_waiting.PrintPath() 
 
                         break
+
 
                     direction = self.GetDir(road.ID, targetRoadID)
                     # 检查冲突车辆
@@ -205,7 +236,7 @@ class Cross:
         while now < count and roadCount and len(self.Garage)>0 and self.Garage[-1].ptime<=golablData.GlobalData.CurrentTime:
             car = self.Garage.pop(-1)
             # 规划路线
-            car.PathPlanning(car.GetStart(),False)
+            car.PathPlanning(car.GetStart(),True)
             crossTemp = car.Path[0]
             car.CurrentCross = self
 
@@ -241,8 +272,8 @@ class Cross:
             car.stime = golablData.GlobalData.CurrentTime
             now+=1
 
-            roadCount-=1
-            roadBlock.append(road.ID)
+            # roadCount-=1
+            # roadBlock.append(road.ID)
             continue
         for w in waitCars[::-1]:
             self.Garage.append(w)    
