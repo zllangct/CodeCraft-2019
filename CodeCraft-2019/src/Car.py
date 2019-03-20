@@ -106,10 +106,9 @@ class Car:
             #     self.uniqueInfo["congestion"]=[]
 
             nextRoad= self.NextRoad() 
-            nextNode,end=self.NextCross()
-            if end or nextRoad ==None:
-                return
-            if nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
+            nextNode=self.NextCross()
+    
+            if nextRoad and  nextNode and nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
                 self.AddBlocking(nextRoad.ID)
                 self.PathPlanning(self.CurrentCross,True)
 
@@ -149,21 +148,25 @@ class Car:
             
 
     def NextCross(self):
-        if self.CurrentCross and self.Path[0].ID == self.CurrentCross.ID:
-            self.Path.pop(0)
-        return self.Path[0]
+        if len(self.Path)>0:
+            if self.CurrentCross and self.Path[0].ID == self.CurrentCross.ID:
+                self.Path.pop(0)
+            if len(self.Path)>0: 
+                return self.Path[0]
+        return None
     
     def NextRoad(self):
-        frontCross,end =self.NextCross()
-        if end :
-            return None
-        
+        frontCross=self.NextCross()
+        if frontCross ==None:
+            return None       
         return self.CurrentCross.GetRoadByEndID(frontCross.ID)
     
     def Move(self,v):
-        chan = self.CurrentRoad.GetChanel()
+        chan = self.CurrentRoad.GetChannel(self.FrontDir,self.ChanIndex)
         chan[self.CarIndex] = None
-        chan[self.CarIndex+v] = self
+        self.CarIndex += v 
+        chan[self.CarIndex] = self
+        self.CurrentRoad.Cars[self.ID]=(self.FrontDir,self.ChanIndex,self.CarIndex)
 
         self.AddVPassing(v)
         self.ChangeState(CarState.ActionEnd)
@@ -179,6 +182,7 @@ class Car:
         self.FrontDir = dir
         self.ChanIndex=chanIndex
         self.CarIndex = carIndex
+        self.CurrentCross = road.Cross[dir]
 
         self.location = "road"
         self.CarAction("EnterRoad")    
@@ -200,7 +204,7 @@ class Car:
 
     def CheckingFrontCar(self):
         v=self.CurrentRoad.MaxV(self)
-        chan = self.CurrentRoad.GetChanel(self.FrontDir,self.ChanIndex)
+        chan = self.CurrentRoad.GetChannel(self.FrontDir,self.ChanIndex)
         s = v if self.CarIndex+v < self.CurrentRoad.len else self.CurrentRoad.len-self.CarIndex -1
         for p in range(self.CarIndex+1, self.CarIndex+s+1):
             if chan[p] != None:
@@ -216,10 +220,13 @@ class Car:
         return False
     
     def CheckingDestination(self):
-        if len(self.Path)==0:
-            return True
+        if self.endID == self.CurrentCross.ID:
+            return True 
+        return False
+
+
     
-    def CarComplate(self):
+    def CarComplete(self):
         # 车辆离开最后道路
         self.CurrentRoad.CarOut(self)
 
@@ -228,4 +235,4 @@ class Car:
 
         self.OutRoad()
             
-        golablData.GlobalData.CarComplate(self)
+        golablData.GlobalData.CarComplete(self)

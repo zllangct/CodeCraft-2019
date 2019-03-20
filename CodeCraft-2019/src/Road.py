@@ -109,7 +109,7 @@ class Road:
     def MaxV(self, car):
         return min(car.vmax, self.vmax)
 
-    def CarRun(self):
+    def CarRun(self,isNewFrame=False):
         # 遍历双向车道
         for roaddir in self.channels:
             # 遍历车道
@@ -119,19 +119,32 @@ class Road:
                 for carIndex in range(0, len(chan))[::-1]:
                     # 遍历
                     car = chan[carIndex]
+                    
                     if car == None:
                         continue
 
+                    if isNewFrame:
+                        car.state=Car.CarState.WaitingRun
+
+                    if car.state == Car.CarState.ActionEnd:
+                        continue
+                        
                     # 检查前面是否有车辆
                     isFront, frontIndex, frontState = car.CheckingFrontCar()
                     # 检查是否出路口
                     isOut = car.CheckingFrontCross()
 
+                    # 检查是否到达终点
+                    isDestination = car.CheckingDestination()
+                    if isDestination and not isFront and isOut:
+                        car.CarComplete()
+
+                    # 正常行驶
                     if not isFront:
                         # 没有前车
                         if not isOut:
                             # 没有前车 且 不出路口
-                            car.Move(car,self.MaxV(car))
+                            car.Move(self.MaxV(car))
                             # 标记为终止状态
                             car.ChangeState(Car.CarState.ActionEnd)
                         elif isOut:
@@ -142,7 +155,7 @@ class Road:
                         if frontState == Car.CarState.ActionEnd:
                             # 如果前车终止
                             v = min(frontIndex-carIndex-1, self.MaxV(car))
-                            car.Move(car, v)
+                            car.Move( v)
                         elif frontState == Car.CarState.WaitingRun:
                             # 前车等待状态
                             car.ChangeState(Car.CarState.WaitingRun)
@@ -169,19 +182,12 @@ class Road:
 
     # 检查是否有向某个方向行驶的车辆
     def CheckingOutDir(self,crossID,dir):
-        # 遍历所有车道，找到可以过路口的第一排等待车辆
-        for chanIndex in range(0, self.chanCount):
-            chan = self.channels[crossID][chanIndex]
-            for carIndex in range(0, len(chan))[::-1]:
-                car = chan[carIndex]
-                if car != None and car.state == Car.CarState.WaitingRun:
-                    if car.CheckingFrontCross():
-                        nextCross,end=car.NextCross()
-                        if nextCross !=None and nextCross.ID == dir and not end:
-                            return True
-                        else:
-                            continue
-                    break
+        car,_ = self.GetCarWaiting(crossID)
+        if car ==None:
+            return False
+        nextCross=car.NextCross()
+        if nextCross !=None and nextCross.ID == dir:
+            return True
         return False
 
     # 按照优先顺序获取可以出路口的车辆

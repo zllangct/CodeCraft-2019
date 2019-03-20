@@ -98,15 +98,13 @@ class Cross:
         if id == -1:
             return None
         for road in self.Roads.values():
-            if road.ID == id:
+            if road.ID == id and (road.endID == self.ID or road.startID ==self.ID and road.isBothway ==1):
                 return road
 
     def CarRun(self):
         roadList =sorted(list(self.RoadIDs))
         handleLen=len(self.Roads)
         handledList=list([])
-       
-        
 
         # 从小到大遍历道路
         while handleLen>0:
@@ -131,6 +129,7 @@ class Cross:
                     # 检查是否到达终点
                     isDestination = car_waiting.CheckingDestination()
                     if isDestination:
+                        car_waiting.CarComplete()
                         continue
 
                     targetCross =car_waiting.NextCross()     
@@ -173,14 +172,15 @@ class Cross:
                         car_waiting.Move(road.len-car_waiting.CarIndex-1)
                         if restLength == 0:
                             car_waiting.CarAction("wait")
-
                         break
+                    # 更新当前节点
+
                     # 离开老路
                     road.CarOut(car_waiting) 
 
         # 行驶剩余等待状态车辆
         for road in self.Roads.values():
-            road.CarRun(self)
+            road.CarRun()
 
     def GoRoad(self,count):
         waitCars =list([])
@@ -193,12 +193,11 @@ class Cross:
             # 规划路线
             car.PathPlanning(car.GetStart(),False)
             crossTemp = car.Path[0]
-            car.CurrentCross = self
-
             if crossTemp.ID == self.ID:
                 car.Path.pop(0)
                 crossTemp = car.Path[0]
 
+            car.CurrentCross = crossTemp
             road = self.GetRoadByEndID(crossTemp.ID)
             if road == None:
                 logging.error("car go road wrong,invalid start cross")

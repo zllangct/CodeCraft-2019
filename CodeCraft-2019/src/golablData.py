@@ -23,11 +23,10 @@ class globalData:
 
     StateInfo = {"RoadInfo":{},"CrossInfo":{}}
 
-    def CarComplate(self,car):
+    def CarComplete(self,car):
         self.ComplateCount+=1
         if self.ComplateCount == len(self.cars):
             self.State = 0
 
 GlobalData = globalData()
 
-# class StateInfo:

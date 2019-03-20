@@ -17,16 +17,14 @@ def Process(car_path,road_path,cross_path,answer_path):
         for cross in GlobalData.crosses:
             if cross.ID== road.startID:
                 cross.InitRoad(road.endID,road)
-                if road.isBothway==1:
-                    road.InitCross(cross.ID,cross)
-                    count+=1
+                road.InitCross(cross.ID,cross)
+                count+=1
             elif cross.ID==road.endID:
                 road.InitCross(cross.ID,cross)
-                if road.isBothway==1:
-                    cross.InitRoad(road.startID,road)
+                cross.InitRoad(road.startID,road)
                 count +=1
 
-            if (road.isBothway==1 and count >=2) or (road.isBothway==0 and count>=1):
+            if count >=2:
                 break
 
     GlobalData.Map=CrossMap.CrossMap(GlobalData.crosses)
@@ -48,10 +46,10 @@ def Process(car_path,road_path,cross_path,answer_path):
     CompPre = 0
     CarMax = 0 
 
-    GlobalData.state = 1
+    GlobalData.State = 1
     frameCount = 0
     startTime = time.time()
-    while GlobalData.state == 1:
+    while GlobalData.State == 1:
         frameCount+=1
         GlobalData.CurrentTime=frameCount
         Frame()
@@ -101,7 +99,7 @@ def Frame():
 def HandleRoad():
     # print("handle roads")
     for road in GlobalData.roads:
-        road.CarRun()
+        road.CarRun(True)
         
 
 def HandleCross():
@@ -111,7 +109,7 @@ def HandleCross():
 
 def HandleGarage():
     max = 4000 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 50:
+    if GlobalData.Car_Road > 2000:
         max =0  
     else:   
         if max <=0 :
