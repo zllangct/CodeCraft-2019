@@ -19,7 +19,7 @@ class Road:
         self.startID = startID
         self.endID = endID
         self.isBothway = isBothway
-        
+        self.Cars = {}
         self.CarCount ={self.startID: 0, self.endID: 0}
 
         # 初始化车道里面的车车
@@ -63,7 +63,10 @@ class Road:
 
         return count,maxCount
 
-        
+    def GetCarPosition(self,car):
+        if car.ID in self.Cars:
+            return self.Cars[car.ID]
+                      
 
     # 计算道路权值
     def GetWeight(self,source,target,car):
@@ -96,7 +99,7 @@ class Road:
             _sstr = "车道 [ %d ] :" %(_chanIndex+1)
             _chan = self.channels[self.endID][_chanIndex]
             for _car in _chan:
-                _sstr += ("% 6d" %_car.id) if _car != None else "% 6d" % 0
+                _sstr += ("% 6d" %_car.ID) if _car != None else "% 6d" % 0
             print(_sstr)
         print("======================================================================================================")
     
@@ -106,33 +109,6 @@ class Road:
     def MaxV(self, car):
         return min(car.vmax, self.vmax)
 
-    def CheckingFrontCar(self, index, v, chan):
-        chanLen=len(chan)
-        s = v if index+v < chanLen else chanLen-index -1
-        for p in range(index+1, index+s+1):
-            if chan[p] != None:
-                return True, p, chan[p].state
-        return False, None, None
-
-    def CheckingFrontCross(self, car, index, chan,frontCar):
-        if self.MaxV(car) + index >= self.len:
-            car.location="cross"
-            return True
-        car.location="road"
-        return False
-
-    def Move(self, car, index, s, chan):
-        if s == 0:
-            return
-        if index + s >= len(chan):
-            print("move array out of index")
-        # if golablData.GlobalData.Debug:
-        #     print("car %d move : %d" %(car.id,s))
-        chan[index] = None
-        chan[index+s] = car
-        car.CarAction("normal")
-        car.AddVPassing(s)
-
     def CarRun(self):
         # 遍历双向车道
         for roaddir in self.channels:
@@ -141,22 +117,21 @@ class Road:
                 chan = self.channels[roaddir][chanIndex]
                 # 遍历车辆,从出口向入口遍历
                 for carIndex in range(0, len(chan))[::-1]:
-                    
                     # 遍历
                     car = chan[carIndex]
                     if car == None:
                         continue
 
                     # 检查前面是否有车辆
-                    isFront, frontIndex, frontState = self.CheckingFrontCar(carIndex, self.MaxV(car), chan)
+                    isFront, frontIndex, frontState = car.CheckingFrontCar()
                     # 检查是否出路口
-                    isOut = self.CheckingFrontCross(car, carIndex, chan,isFront)
+                    isOut = car.CheckingFrontCross()
 
                     if not isFront:
                         # 没有前车
                         if not isOut:
                             # 没有前车 且 不出路口
-                            self.Move(car, carIndex, self.MaxV(car), chan)
+                            car.Move(car,self.MaxV(car))
                             # 标记为终止状态
                             car.ChangeState(Car.CarState.ActionEnd)
                         elif isOut:
@@ -167,8 +142,7 @@ class Road:
                         if frontState == Car.CarState.ActionEnd:
                             # 如果前车终止
                             v = min(frontIndex-carIndex-1, self.MaxV(car))
-                            self.Move(car, carIndex, v, chan)
-                            car.ChangeState( Car.CarState.ActionEnd)
+                            car.Move(car, v)
                         elif frontState == Car.CarState.WaitingRun:
                             # 前车等待状态
                             car.ChangeState(Car.CarState.WaitingRun)
@@ -188,40 +162,10 @@ class Road:
                     if car != None:
                         carCount+=1
 
-        if not "CarCount" in golablData.GlobalData.StateInfo["RoadInfo"]:
-            golablData.GlobalData.StateInfo["RoadInfo"]["CarCount"]={}
+        if not "CarInGarage" in golablData.GlobalData.StateInfo["RoadInfo"]:
+            golablData.GlobalData.StateInfo["RoadInfo"]["CarInGarage"]={}
 
-        golablData.GlobalData.StateInfo["RoadInfo"]["CarCount"][self.ID] = carCount               
-
-    # 此时没有出路口的车辆
-    def RunRest(self,cross):
-        # 遍历车道
-        for chanIndex in range(0, self.chanCount):
-            chan = self.channels[cross.ID][chanIndex]
-            # 遍历车辆,从出口向入口遍历
-            for carIndex in range(0, len(chan))[::-1]:
-                # 遍历
-                car = chan[carIndex]
-                if car == None:
-                    continue
-
-                # 检查前面是否有车辆
-                isFront, frontIndex, _ = self.CheckingFrontCar(carIndex, self.MaxV(car), chan)
-                # 检查是否出路口
-                isOut = self.CheckingFrontCross(car, carIndex, chan,isFront)
-                if not isFront:
-                    if isOut:
-                        self.Move(car, carIndex, self.len-carIndex-1, chan)
-                    else:
-                        # 没有前车
-                        self.Move(car, carIndex, self.MaxV(car), chan)
-                    # 标记为终止状态
-                    car.ChangeState(Car.CarState.ActionEnd)
-                else:
-                    # 有前车
-                    v = min(frontIndex-carIndex-1, self.MaxV(car))
-                    self.Move(car, carIndex, v, chan)
-                    car.ChangeState(Car.CarState.ActionEnd)
+        golablData.GlobalData.StateInfo["RoadInfo"]["CarInGarage"][self.ID] = carCount               
 
     # 检查是否有向某个方向行驶的车辆
     def CheckingOutDir(self,crossID,dir):
@@ -231,7 +175,7 @@ class Road:
             for carIndex in range(0, len(chan))[::-1]:
                 car = chan[carIndex]
                 if car != None and car.state == Car.CarState.WaitingRun:
-                    if self.CheckingFrontCross(car,carIndex,chan,False):
+                    if car.CheckingFrontCross():
                         nextCross,end=car.NextCross()
                         if nextCross !=None and nextCross.ID == dir and not end:
                             return True
@@ -250,10 +194,6 @@ class Road:
                 if index in skip:
                     continue
                 chan=self.GetChannel(crossID, index)
-                if chan == None:
-                    chan=self.GetChannel(crossID, index)
-                    print("GetCarWaiting wrong")
-                    continue
                 car = chan[self.len-row-1]
                 # 停止状态的车道 或者 有不出路口的首车 此车道不再遍历
                 if car != None :
@@ -261,12 +201,16 @@ class Road:
                         skip.append(index)
                         continue
                     elif car.state == Car.CarState.WaitingRun:
-                        return car,row,chan,index
+                        return car,row
                 
-        return None,None,None,None
+        return None,None
 
     # 车辆进入道路
-    def CarEnter(self,car,maxLen,dir):
+    def CarEnter(self,car,dir,restLength=0):
+        # 计算在新道路上能行驶的最大距离
+        tmaxv=self.MaxV(car)
+        maxLen= tmaxv-restLength if tmaxv-restLength>0 else 0
+
         targetChan=None
         targetIndex=None
         # 遍历车道
@@ -286,10 +230,17 @@ class Road:
         # 如果没有位置可以停车，则返回失败
         if targetChan==None and targetIndex==None:
             return False
+
         chan[targetIndex]=car
         self.CarCount[dir]+=1
+        self.Cars[car.ID] = (dir,chanIndex,targetIndex)
+
+        car.EnterRoad(self,dir,chanIndex,targetIndex)
         return True
         
-    def CarOut(self,dir,chanIndex,index):
+    def CarOut(self,car):
+        dir,chanIndex,index=self.GetCarPosition(car)
         self.channels[dir][chanIndex][index]=None
         self.CarCount[dir]-=1
+
+        self.Cars.pop(car.ID)

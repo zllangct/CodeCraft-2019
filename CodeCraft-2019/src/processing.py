@@ -59,14 +59,14 @@ def Process(car_path,road_path,cross_path,answer_path):
         
 
         # 信息统计
-        roadInfo = GlobalData.StateInfo["RoadInfo"]["CarCount"]
+        roadInfo = GlobalData.StateInfo["RoadInfo"]["CarInGarage"]
         roadCarCount = 0
         for _carCount in roadInfo.values():
             roadCarCount+=_carCount
         GlobalData.Car_Road = roadCarCount
         print("当前道路中的车辆：%d" % roadCarCount)
 
-        crossInfo = GlobalData.StateInfo["CrossInfo"]["CarCount"]
+        crossInfo = GlobalData.StateInfo["CrossInfo"]["CarInGarage"]
         crossCarCount = 0
         for _carCount in crossInfo.values():
             crossCarCount+=_carCount
@@ -111,7 +111,7 @@ def HandleCross():
 
 def HandleGarage():
     max = 4000 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 2000:
+    if GlobalData.Car_Road > 50:
         max =0  
     else:   
         if max <=0 :

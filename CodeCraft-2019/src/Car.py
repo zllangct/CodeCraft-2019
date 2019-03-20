@@ -11,7 +11,7 @@ class CarState:
 
 class Car:
     def __init__(self,id,startID,endID,vmax,ptime):
-        self.id=id
+        self.ID=id
         self.startID=startID
         self.endID=endID
         self.vmax=vmax
@@ -22,7 +22,7 @@ class Car:
         self.start=None
         self.end = None
         self.state = CarState.Null
-        self.currentRoad = None
+        self.CurrentRoad = None
         self.Path=None
         self.PathTemp=[]
         self.PathPassing = list([])
@@ -30,6 +30,9 @@ class Car:
 
         self.isComplate = False
 
+        self.ChanIndex = 0
+        self.CarIndex = 0
+        self.FrontDir = 0
 
         # 用于决策
         self.waitingTime = 0
@@ -51,7 +54,7 @@ class Car:
     def CarAction(self, actionType,*args):
         if actionType == "wait":
             self.waitingTime +=1
-        if actionType == "normal":
+        else:
             self.waitingTime = 0
 
         self.Think()
@@ -61,7 +64,7 @@ class Car:
             sstr=""
             for pathNode in ii:
                 sstr+=" "+str(pathNode.ID)
-            print(sstr+"  当前节点：%d"%self.CurrentCross.ID+ "  当前道路：%d——%d" %(self.currentRoad.startID,self.currentRoad.endID))
+            print(sstr+"  当前节点：%d"%self.CurrentCross.ID+ "  当前道路：%d——%d" %(self.CurrentRoad.startID,self.CurrentRoad.endID))
 
     def AddBlocking(self,roadID):
         if not "block" in self.uniqueInfo:
@@ -82,7 +85,7 @@ class Car:
                     return
 
                 self.AddCongeestion(nextRoad.ID)
-                self.AddBlocking(self.currentRoad.ID)
+                self.AddBlocking(self.CurrentRoad.ID)
 
                 self.PathPlanning(self.CurrentCross,True)
 
@@ -128,21 +131,27 @@ class Car:
         if self.Path ==None or rePlan:
             if len(self.PathPassing)>0:
                 self.AddBlocking(self.PathPassing[-1].ID)
+            
             p = astar.astar(golablData.GlobalData.Map,currentCross,self.GetEnd(),self,self.uniqueInfo)
+            self.uniqueInfo["block"]=[]
+            self.uniqueInfo["congestion"]=[]
             if p ==None:
                 return
             self.Path= p 
             self.PathTemp.append(self.Path.copy())
-            p=False
-            if p:
+            
+
+            # debug TODO
+            debugPrint=False
+            if debugPrint:
                 self.PrintPath()
 
+            
+
     def NextCross(self):
-        if len(self.Path)==0:
-            return None,True
-        # if self.CurrentCross.ID == self.Path[0].ID:
-            # self.PrintPath()
-        return self.Path[0],False
+        if self.CurrentCross and self.Path[0].ID == self.CurrentCross.ID:
+            self.Path.pop(0)
+        return self.Path[0]
     
     def NextRoad(self):
         frontCross,end =self.NextCross()
@@ -150,25 +159,73 @@ class Car:
             return None
         
         return self.CurrentCross.GetRoadByEndID(frontCross.ID)
-        
+    
+    def Move(self,v):
+        chan = self.CurrentRoad.GetChanel()
+        chan[self.CarIndex] = None
+        chan[self.CarIndex+v] = self
 
-    def EnterNewRoad(self,road):
-        if self.Path == None:
-            self.PathPlanning(self.GetStart())
+        self.AddVPassing(v)
+        self.ChangeState(CarState.ActionEnd)
+        self.CarAction("move")
 
-        if self.currentRoad != None:
-            self.PathPassing.append(self.currentRoad)
-            # 当前道路和真实道路不等，重新规划
-            # if road.startID != self.currentRoad.endID:
-            #     self.PathPlanning(self.currentRoad.GetEndCross(),True)
-        
-        self.CurrentCross =self.Path.pop(0)
-        self.currentRoad= road
+
+    def EnterRoad(self,road,dir,chanIndex,carIndex):
+        # 离开之前道路
+        self.OutRoad()
+
+        # 进入新道路
+        self.CurrentRoad= road
+        self.FrontDir = dir
+        self.ChanIndex=chanIndex
+        self.CarIndex = carIndex
+
         self.location = "road"
+        self.CarAction("EnterRoad")    
+
         # 进入终止状态
         self.state=CarState.ActionEnd
-        self.CarAction("normal")
 
-        # nextCross =self.Path[0]
-        # road = self.CurrentCross.GetRoadByEndID(nextCross.ID)
-      
+    def OutRoad(self):
+        if self.CurrentRoad != None:
+            self.PathPassing.append(self.CurrentRoad)
+        
+        self.CurrentRoad= None
+        self.FrontDir = None
+        self.ChanIndex=None
+        self.CarIndex = None
+
+        self.location = "None"
+        self.CarAction("OutRoad")
+
+    def CheckingFrontCar(self):
+        v=self.CurrentRoad.MaxV(self)
+        chan = self.CurrentRoad.GetChanel(self.FrontDir,self.ChanIndex)
+        s = v if self.CarIndex+v < self.CurrentRoad.len else self.CurrentRoad.len-self.CarIndex -1
+        for p in range(self.CarIndex+1, self.CarIndex+s+1):
+            if chan[p] != None:
+                return True, p, chan[p].state
+        return False, None, None
+    
+    def CheckingFrontCross(self):
+        if self.CurrentRoad.MaxV(self) + self.CarIndex >= self.CurrentRoad.len:
+            self.location="cross"
+            return True
+
+        self.location="road"
+        return False
+    
+    def CheckingDestination(self):
+        if len(self.Path)==0:
+            return True
+    
+    def CarComplate(self):
+        # 车辆离开最后道路
+        self.CurrentRoad.CarOut(self)
+
+        self.ChangeState(CarState.ActionEnd)
+        self.isComplate=True 
+
+        self.OutRoad()
+            
+        golablData.GlobalData.CarComplate(self)

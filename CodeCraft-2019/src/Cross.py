@@ -45,7 +45,7 @@ class Cross:
         self.Garage.append(car)
 
     def sortkey(self,item):
-        return (item.ptime,item.id)
+        return (item.ptime,item.ID)
 
     def GarageSort(self):
         self.Garage.sort(key=self.sortkey,reverse=True)
@@ -74,8 +74,8 @@ class Cross:
             if road.endID == targetID or (road.startID == targetID and road.isBothway ==1):
                 return road.len
     
-    def GetDir(self,currentRoadID,targetRoadID):
-        index_source = self.RoadIDs.index(currentRoadID)
+    def GetDir(self,CurrentRoadID,targetRoadID):
+        index_source = self.RoadIDs.index(CurrentRoadID)
         index_target = self.RoadIDs.index(targetRoadID)
         return self.I2Dir[index_source][index_target]
 
@@ -91,8 +91,8 @@ class Cross:
                 return road
         return None
 
-    def GetRoadByDir(self,currentRoadID,dir):
-        index_source = self.RoadIDs.index(currentRoadID)
+    def GetRoadByDir(self,CurrentRoadID,dir):
+        index_source = self.RoadIDs.index(CurrentRoadID)
         index_target = self.Dir2I[index_source][dir]
         id = self.RoadIDs[index_target]
         if id == -1:
@@ -123,68 +123,27 @@ class Cross:
                 canRun = True
                 while canRun:
                     # 获取调度车辆 
-                    car_waiting,restLength,chan,chanIndex = road.GetCarWaiting(self.ID)
+                    car_waiting,restLength = road.GetCarWaiting(self.ID)
                     if car_waiting == None:
                         handleLen-=1
                         break
-           
-                    targetCross,end =car_waiting.NextCross() 
-                    if end :
-                        chan[road.len-restLength-1]=None
-                        car_waiting.ChangeState(Car.CarState.ActionEnd)
-                        car_waiting.isComplate=True                        
-                        if car_waiting.currentRoad != None:
-                            car_waiting.PathPassing.append(car_waiting.currentRoad)
-                            car_waiting.currentRoad.CarCount[self.ID]-=1
-                            car_waiting.currentRoad = None
-                            
-                        golablData.GlobalData.CarComplate(car_waiting)
-                        continue
-                    if targetCross.ID == self.ID:
-                        car_waiting.Path.pop(0)
-                        targetCross,end =car_waiting.NextCross()
 
+                    # 检查是否到达终点
+                    isDestination = car_waiting.CheckingDestination()
+                    if isDestination:
+                        continue
+
+                    targetCross =car_waiting.NextCross()     
                     targetRoad = self.GetRoadByEndID(targetCross.ID)
 
                     if targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 3:
                         car_waiting.AddBlocking(targetRoad.ID)
-                        car_waiting.PathPlanning(car_waiting.CurrentCross,True)
-
+                        car_waiting.PathPlanning(car_waiting.CurrentCross,True)                       
                         
-                        car_waiting.uniqueInfo["block"]=[]
-                        car_waiting.uniqueInfo["congestion"]=[]
-
-                        targetCross,end =car_waiting.NextCross() 
-                        if end :
-                            chan[road.len-restLength-1]=None
-                            car_waiting.ChangeState(Car.CarState.ActionEnd)
-                            car_waiting.isComplate=True
-                            if car_waiting.currentRoad != None:
-                                car_waiting.PathPassing.append(car_waiting.currentRoad)
-                                car_waiting.currentRoad = None
-                            golablData.GlobalData.CarComplate(car_waiting)
-                            continue
-
-                        if targetCross.ID == self.ID:
-                            car_waiting.Path.pop(0)
-                            targetCross,end =car_waiting.NextCross()
-
+                        targetCross =car_waiting.NextCross()
                         targetRoad = self.GetRoadByEndID(targetCross.ID)
 
-
                     targetRoadID = targetRoad.ID
-
-                    if road.ID == targetRoadID:
-                        car_waiting.AddBlocking(road.ID)
-                        car_waiting.CarAction("wait")
-                        car_waiting.ChangeState(Car.CarState.ActionEnd)
-                        
-                        # debug
-                        car_waiting.PrintPath() 
-
-                        break
-
-
                     direction = self.GetDir(road.ID, targetRoadID)
                     # 检查冲突车辆
                     if direction == self.D:
@@ -208,24 +167,20 @@ class Cross:
                             # 如果有冲突，则暂时调度，切换到下一条道路
                             break
                     # 没有冲突，行驶车辆,过路口
-                    tmaxv=targetRoad.MaxV(car_waiting)
-                    maxLen= tmaxv-restLength if tmaxv-restLength>0 else 0
-                    ok= targetRoad.CarEnter(car_waiting,maxLen,targetCross.ID)
+                    ok= targetRoad.CarEnter(car_waiting,targetCross.ID,restLength)
                     if not ok :
                         # 过路口失败，说明对面车道拥堵，行驶到路口最后位置
-                        carIndex = road.len-restLength-1
-                        road.Move(car_waiting, carIndex, road.len-carIndex-1, chan)
-                        if road.len-carIndex-1 == 0:
+                        car_waiting.Move(road.len-car_waiting.CarIndex-1)
+                        if restLength == 0:
                             car_waiting.CarAction("wait")
-                        car_waiting.ChangeState(Car.CarState.ActionEnd)
-                        break
 
-                    road.CarOut(self.ID,chanIndex,road.len-restLength-1)
-                    car_waiting.EnterNewRoad(targetRoad) 
+                        break
+                    # 离开老路
+                    road.CarOut(car_waiting) 
 
         # 行驶剩余等待状态车辆
         for road in self.Roads.values():
-            road.RunRest(self)
+            road.CarRun(self)
 
     def GoRoad(self,count):
         waitCars =list([])
@@ -236,7 +191,7 @@ class Cross:
         while now < count and roadCount and len(self.Garage)>0 and self.Garage[-1].ptime<=golablData.GlobalData.CurrentTime:
             car = self.Garage.pop(-1)
             # 规划路线
-            car.PathPlanning(car.GetStart(),True)
+            car.PathPlanning(car.GetStart(),False)
             crossTemp = car.Path[0]
             car.CurrentCross = self
 
@@ -252,7 +207,7 @@ class Cross:
             if (road.ID in roadBlock):
                 waitCars.append(car)
                 continue
-
+            # 判断是否合适上路
             count,maxCount = road.GetEmpty(crossTemp.ID,car)
             if count / maxCount < 0.6:
                 roadCount-=1
@@ -260,25 +215,23 @@ class Cross:
                 waitCars.append(car)
                 continue
 
-            canEnter=road.CarEnter(car,road.MaxV(car),crossTemp.ID)
+            # 进入道路
+            canEnter=road.CarEnter(car,crossTemp.ID)
             if not canEnter:
                 roadCount-=1
                 roadBlock.append(road.ID)
                 waitCars.append(car)
                 continue
 
-            car.EnterNewRoad(road)
-            car.location = "road"
+            # 上路时间
             car.stime = golablData.GlobalData.CurrentTime
             now+=1
-
-            # roadCount-=1
-            # roadBlock.append(road.ID)
             continue
+
         for w in waitCars[::-1]:
             self.Garage.append(w)    
         
-        if not "CarCount" in golablData.GlobalData.StateInfo["CrossInfo"]:
-            golablData.GlobalData.StateInfo["CrossInfo"]["CarCount"]={}
+        if not "CarInGarage" in golablData.GlobalData.StateInfo["CrossInfo"]:
+            golablData.GlobalData.StateInfo["CrossInfo"]["CarInGarage"]={}
 
-        golablData.GlobalData.StateInfo["CrossInfo"]["CarCount"][self.ID] = len(self.Garage)
+        golablData.GlobalData.StateInfo["CrossInfo"]["CarInGarage"][self.ID] = len(self.Garage)

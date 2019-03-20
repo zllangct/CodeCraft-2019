@@ -70,8 +70,8 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
                     if road.ID in carUnique["congestion"]:
                         unique += 1000
 
-            if car.currentRoad!=None :
-                if road.ID == car.currentRoad.ID :
+            if car.CurrentRoad!=None :
+                if road.ID == car.CurrentRoad.ID :
                     continue
 
             ncost = dist + road.GetWeight(curnode,cross,car) + unique
