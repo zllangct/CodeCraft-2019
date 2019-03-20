@@ -3,15 +3,18 @@
 from heapq import heappush, heappop
 from itertools import count
 import golablData
-import Road,Cross
+import Road
+import Cross
 
-def Heuristic(currentCross,target):
+
+def Heuristic(currentCross, target):
     return golablData.GlobalData.DistancePre[currentCross.ID][target.ID]
 
-def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
+
+def astar(Map, source, target, car, carUnique=None, heuristic=Heuristic):
 
     if heuristic is None:
-        heuristic = lambda u, v:0
+        def heuristic(u, v): return 0
 
     push = heappush
     pop = heappop
@@ -30,11 +33,10 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
                 path.append(node)
                 node = explored[node]
             path.reverse()
-            
-           
-            sstr=""
+
+            sstr = ""
             for p in path:
-                sstr+=" "+str(p.ID)
+                sstr += " "+str(p.ID)
             if golablData.GlobalData.Debug:
                 print(sstr)
 
@@ -44,7 +46,7 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
             continue
 
         explored[curnode] = parent
-        
+
         # debug ===================
         # if curnode.ID==60:
         #     print(curnode.ID)
@@ -59,9 +61,9 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
         for cross in curnode.GetNeighbor().values():
             if cross in explored:
                 continue
-            road= curnode.GetRoadByEndID(cross.ID)
+            road = curnode.GetRoadByEndID(cross.ID)
             unique = 0
-            if carUnique != None: 
+            if carUnique != None:
                 if "block" in carUnique:
                     if road.ID in carUnique["block"]:
                         continue
@@ -70,11 +72,11 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
                     if road.ID in carUnique["congestion"]:
                         unique += 1000
 
-            if car.CurrentRoad!=None :
-                if road.ID == car.CurrentRoad.ID :
+            if car.CurrentRoad != None:
+                if road.ID == car.CurrentRoad.ID:
                     continue
 
-            ncost = dist + road.GetWeight(curnode,cross,car) + unique
+            ncost = dist + road.GetWeight(curnode, cross, car) + unique
             if cross in enqueued:
                 qcost, h = enqueued[cross]
                 if qcost <= ncost:
@@ -85,11 +87,9 @@ def astar(Map, source, target, car,carUnique=None,heuristic=Heuristic):
             push(queue, (ncost + h, next(c), cross, ncost, curnode))
 
 
-
-def astar_path_length(Map, source, target, heuristic=None):   
+def astar_path_length(Map, source, target, heuristic=None):
     path = astar(Map, source, target, heuristic)
     length = 0
-    for i in range(0,len(path)-1):
-        length+=path[i].GetRoadLength(path[i+1].ID)
+    for i in range(0, len(path)-1):
+        length += path[i].GetRoadLength(path[i+1].ID)
     return length
-
