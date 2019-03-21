@@ -218,7 +218,7 @@ class Cross:
                 roadCount -= 1
                 roadBlock.append(road.ID)
                 waitCars.append(car)
-                continue
+                continue 
 
             # 进入道路
             canEnter = road.CarEnter(car, crossTemp.ID)
