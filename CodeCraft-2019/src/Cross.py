@@ -139,7 +139,9 @@ class Cross:
                     targetCross = car_waiting.NextCross()
                     targetRoad = self.GetRoadByEndID(targetCross.ID)
 
-                    if targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 3:
+                    if targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 1.5:  # 1.5 最佳
+                    # count, maxCount = targetRoad.GetEmpty(targetCross.ID, car_waiting)
+                    # if count / maxCount < 0.4:
                         car_waiting.AddBlocking(targetRoad.ID)
                         car_waiting.PathPlanning(
                             car_waiting.CurrentCross, True)
@@ -214,8 +216,9 @@ class Cross:
                 continue
             # 判断是否合适上路
             count, maxCount = road.GetEmpty(crossTemp.ID, car)
-            if count / maxCount < 0.6:
-                roadCount -= 1
+            if count / maxCount < 0.6:  #0.6最优
+            # if road.CarCount[crossTemp.ID] > road.chanCount * road.len / 4: 
+                roadCount -= 1 
                 roadBlock.append(road.ID)
                 waitCars.append(car)
                 continue 

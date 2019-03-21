@@ -68,7 +68,7 @@ class Car:
         else:
             self.waitingTime = 0
 
-        # self.Think()
+        self.Think()
 
     def PrintPath(self):
         for ii in self.PathTemp:
@@ -89,13 +89,15 @@ class Car:
 
     def Think(self):
         if self.location == "cross":
-            if self.waitingTime > 20:
+            if self.waitingTime > 10:
                 nextNode, end = self.NextCross()
                 nextRoad = self.NextRoad()
                 if end:
                     return
 
                 self.AddCongeestion(nextRoad.ID)
+                
+
                 self.AddBlocking(self.CurrentRoad.ID)
 
                 self.PathPlanning(self.CurrentCross, True)
@@ -140,7 +142,9 @@ class Car:
     def PathPlanning(self, currentCross, rePlan=False):
         if self.Path == None or rePlan:
             if len(self.PathPassing) > 0:
-                self.AddBlocking(self.PathPassing[-1].ID)
+                for path in self.PathPassing:
+                    self.AddBlocking(path.ID)
+                # self.AddBlocking(self.PathPassing[-1].ID)
 
             p = astar.astar(golablData.GlobalData.Map, currentCross,
                             self.GetEnd(), self, self.uniqueInfo)
