@@ -1,27 +1,24 @@
-# _*_ coding: utf-8 _*_
+#!/usr/bin/python
+# -*- coding:utf-8 -*-
 import io
-import sys
-import os
-import re
+import os,re
 import numpy as np
 import Car
-import Road
+import Road 
 import Cross
 
 
 class TextIO:
-    def description(self):
-        print("this is text io.")
 
     def __init__(self, path_car, path_road, path_cross, path_out):
-        print("TextIO Constructor")
+        # print("TextIO Constructor")
         self.path_car = path_car
         self.path_road = path_road
         self.path_cross = path_cross
         self.path_out = path_out
 
     def ReadAll(self):
-        print("Read data")
+        # print("Read data")
         cars = list([])
         crosses = list([])
         roads = list([])
@@ -65,7 +62,7 @@ class TextIO:
         return roads, cars, crosses
 
     def Write(self, answer):
-        print("Write data")
+        # print("Write data")
         with open(self.path_out, "wt") as f:
             # for line in answer:
             #     sstr =[]

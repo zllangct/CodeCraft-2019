@@ -16,7 +16,7 @@ def main():
     cross_path = "./config/cross.txt"
     answer_path = "./config/answer.txt"
 
-    if True:
+    if False:
         if len(sys.argv) != 5:
             logging.info(
                 'please input args: car_path, road_path, cross_path, answerPath')

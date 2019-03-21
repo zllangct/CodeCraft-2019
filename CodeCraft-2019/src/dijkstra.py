@@ -1,4 +1,5 @@
-# Dijkstra算法,用于预计算个点间的距离
+#!/usr/bin/python
+# -*- coding:utf-8 -*-
 
 
 def Dijkstra(G, source, INF=99999):

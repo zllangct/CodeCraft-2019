@@ -1,5 +1,6 @@
-# _*_ coding: utf-8 _*_
-import textio
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import textio 
 from golablData import GlobalData
 import CrossMap
 import dijkstra
@@ -7,7 +8,7 @@ import time
 
 
 def Process(car_path, road_path, cross_path, answer_path):
-    print("program start...")
+    # print("program start...")
 
     # Read input data
     input = textio.TextIO(car_path, road_path, cross_path, answer_path)
@@ -80,8 +81,7 @@ def Process(car_path, road_path, cross_path, answer_path):
             RunV = v
         CompPre = GlobalData.ComplateCount
 
-        print("到达量：%d  最大值：%d  最大值时道路承载量：%d  车辆综合检查: %d" % (
-            v, RunV, CarMax, roadCarCount+crossCarCount+GlobalData.ComplateCount))
+        print("到达量：%d  最大值：%d  最大值时道路承载量：%d  车辆综合检查: %d" % (v, RunV, CarMax, roadCarCount+crossCarCount+GlobalData.ComplateCount))
 
         print("程序运行时间：%f" % time.time().__sub__(startTime))
 
@@ -95,7 +95,7 @@ def Process(car_path, road_path, cross_path, answer_path):
 
 
 def Frame():
-    print("Current frame:"+str(GlobalData.CurrentTime))
+    print("调度时间:"+str(GlobalData.CurrentTime))
 
     HandleRoad()
     HandleCross()
@@ -103,7 +103,7 @@ def Frame():
 
 
 def HandleRoad():
-    # print("handle roads")
+    # # print("handle roads")
     for road in GlobalData.roads:
         road.CarRun(True)
 
@@ -115,8 +115,8 @@ def HandleCross():
 
 
 def HandleGarage():
-    max = 4000 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 2000:
+    max = 640 - GlobalData.Car_Road
+    if GlobalData.Car_Road > 100:
         max = 0
     else:
         if max <= 0:

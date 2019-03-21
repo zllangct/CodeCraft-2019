@@ -1,4 +1,5 @@
-# _*_ coding: utf-8 _*_
+#!/usr/bin/python
+# -*- coding:utf-8 -*-
 import numpy as np
 import logging
 import Car
@@ -29,7 +30,7 @@ class Road:
             for _ in range(0, self.chanCount):
                 self.channels[roaddir].append([None for i in range(self.len)])
 
-        # print("")
+        # # print("")
 
     def InitCross(self, ID, cross):
         self.Cross[ID] = cross
@@ -95,15 +96,14 @@ class Road:
         if not golablData.GlobalData.Debug and not temp:
             return
         start = self.startID if dir == self.endID else self.endID
-        print("=======起点：%d========道路ID：%d=====终点：%d==========================================================" % (
-            start, self.ID, dir))
+        # print("=======起点：%d========道路ID：%d=====终点：%d==========================================================" % (start, self.ID, dir))
         for _chanIndex in range(0, self.chanCount):
             _sstr = "车道 [ %d ] :" % (_chanIndex+1)
             _chan = self.channels[self.endID][_chanIndex]
             for _car in _chan:
                 _sstr += ("% 6d" % _car.ID) if _car != None else "% 6d" % 0
-            print(_sstr)
-        print("======================================================================================================")
+            # print(_sstr)
+        # print("======================================================================================================")
 
     def GetLane(self, dir):
         return self.channels[dir]

@@ -1,4 +1,5 @@
-# _*_ coding: utf-8 _*_
+#!/usr/bin/python
+# -*- coding:utf-8 -*- 
 import numpy as np
 import logging
 import Car
@@ -196,7 +197,7 @@ class Cross:
         while now < count and roadCount and len(self.Garage) > 0 and self.Garage[-1].ptime <= golablData.GlobalData.CurrentTime:
             car = self.Garage.pop(-1)
             # 规划路线
-            car.PathPlanning(car.GetStart(), False)
+            car.PathPlanning(car.GetStart(), True)
             crossTemp = car.Path[0]
             if crossTemp.ID == self.ID:
                 car.Path.pop(0)

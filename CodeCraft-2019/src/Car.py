@@ -1,4 +1,5 @@
-# _*_ coding: utf-8 _*_
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import numpy as np
 import logging
 import golablData
@@ -21,6 +22,7 @@ class Car:
         self.ptime = ptime
         # 上路时间
         self.stime = None
+        self.etime = None
         self.start = None
         self.end = None
         self.state = CarState.Null
@@ -66,15 +68,14 @@ class Car:
         else:
             self.waitingTime = 0
 
-        self.Think()
+        # self.Think()
 
     def PrintPath(self):
         for ii in self.PathTemp:
             sstr = ""
             for pathNode in ii:
                 sstr += " "+str(pathNode.ID)
-            print(sstr+"  当前节点：%d" % self.CurrentCross.ID + "  当前道路：%d——%d" %
-                  (self.CurrentRoad.startID, self.CurrentRoad.endID))
+            # print(sstr+"  当前节点：%d" % self.CurrentCross.ID + "  当前道路：%d——%d" %(self.CurrentRoad.startID, self.CurrentRoad.endID))
 
     def AddBlocking(self, roadID):
         if not "block" in self.uniqueInfo:
@@ -88,7 +89,7 @@ class Car:
 
     def Think(self):
         if self.location == "cross":
-            if self.waitingTime > 5:
+            if self.waitingTime > 20:
                 nextNode, end = self.NextCross()
                 nextRoad = self.NextRoad()
                 if end:
@@ -115,15 +116,15 @@ class Car:
             #     self.uniqueInfo["block"]=[]
             #     self.uniqueInfo["congestion"]=[]
 
-            nextRoad = self.NextRoad()
-            nextNode = self.NextCross()
+            # nextRoad = self.NextRoad()
+            # nextNode = self.NextCross()
 
-            if nextRoad and nextNode and nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
-                self.AddBlocking(nextRoad.ID)
-                self.PathPlanning(self.CurrentCross, True)
+            # if nextRoad and nextNode and nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
+            #     self.AddBlocking(nextRoad.ID)
+            #     self.PathPlanning(self.CurrentCross, True)
 
-                self.uniqueInfo["block"] = []
-                self.uniqueInfo["congestion"] = []
+            #     self.uniqueInfo["block"] = []
+            #     self.uniqueInfo["congestion"] = []
 
     def GetStart(self):
         if self.start == None:
@@ -240,5 +241,5 @@ class Car:
         self.isComplate = True
 
         self.OutRoad()
-
+        self.etime = golablData.GlobalData.CurrentTime
         golablData.GlobalData.CarComplete(self)

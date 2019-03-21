@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from heapq import heappush, heappop
@@ -14,7 +15,7 @@ def Heuristic(currentCross, target):
 def astar(Map, source, target, car, carUnique=None, heuristic=Heuristic):
 
     if heuristic is None:
-        def heuristic(u, v): return 0
+        heuristic =lambda u, v: 0 
 
     push = heappush
     pop = heappop
@@ -37,8 +38,8 @@ def astar(Map, source, target, car, carUnique=None, heuristic=Heuristic):
             sstr = ""
             for p in path:
                 sstr += " "+str(p.ID)
-            if golablData.GlobalData.Debug:
-                print(sstr)
+            # if golablData.GlobalData.Debug:
+                # print(sstr)
 
             return path
 
@@ -49,13 +50,13 @@ def astar(Map, source, target, car, carUnique=None, heuristic=Heuristic):
 
         # debug ===================
         # if curnode.ID==60:
-        #     print(curnode.ID)
+        #     # print(curnode.ID)
         # temp = curnode
         # sstr=str(temp.ID)
         # while explored[temp] !=None:
         #     temp = explored[temp]
         #     sstr+=(" "+str(temp.ID))
-        # print(sstr)
+        # # print(sstr)
         # =========================
 
         for cross in curnode.GetNeighbor().values():
