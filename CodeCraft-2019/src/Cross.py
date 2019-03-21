@@ -197,7 +197,7 @@ class Cross:
         while now < count and roadCount and len(self.Garage) > 0 and self.Garage[-1].ptime <= golablData.GlobalData.CurrentTime:
             car = self.Garage.pop(-1)
             # 规划路线
-            car.PathPlanning(car.GetStart(), True)
+            car.PathPlanning(car.GetStart(), False)
             crossTemp = car.Path[0]
             if crossTemp.ID == self.ID:
                 car.Path.pop(0)
