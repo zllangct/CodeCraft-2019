@@ -34,7 +34,7 @@ class Cross:
         self.RoadIDs.append(road4)
 
         self.Garage = list([])
-
+        self.FrameComplete =False
         self.Roads = None
         self.Neighbor = None
     # 初始化道路对象
@@ -105,7 +105,7 @@ class Cross:
             if road.ID == id and (road.endID == self.ID or road.startID == self.ID and road.isBothway == 1):
                 return road
 
-    def CarRun(self):
+    def CarRun(self,count):
         roadList = sorted(list(self.RoadIDs))
         handleLen = len(self.Roads)
         handledList = list([])
@@ -129,6 +129,14 @@ class Cross:
                     if car_waiting == None:
                         handleLen -= 1
                         break
+                    
+                    # 检查是否出路口
+                    isOut = car_waiting.CheckingFrontCross()
+                    if not isOut:
+                        road.ChanRun(road.GetChannel(self.ID,car_waiting.ChanIndex))
+                        handleLen -= 1
+                        handledList.append(roadID)
+                        break
 
                     # 检查是否到达终点
                     isDestination = car_waiting.CheckingDestination()
@@ -140,8 +148,6 @@ class Cross:
                     targetRoad = self.GetRoadByEndID(targetCross.ID)
 
                     if targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 1.5:  # 1.5 最佳
-                    # count, maxCount = targetRoad.GetEmpty(targetCross.ID, car_waiting)
-                    # if count / maxCount < 0.4:
                         car_waiting.AddBlocking(targetRoad.ID)
                         car_waiting.PathPlanning(
                             car_waiting.CurrentCross, True)
@@ -172,23 +178,46 @@ class Cross:
                         if roadD != None and roadD.CheckingOutDir(self.ID, targetRoadID):
                             # 如果有冲突，则暂时调度，切换到下一条道路
                             break
+
+                    # 记录车辆所在车道
+                    chanIndex = car_waiting.ChanIndex
                     # 没有冲突，行驶车辆,过路口
-                    ok = targetRoad.CarEnter(
+                    ok,needWait = targetRoad.CarEnter(
                         car_waiting, targetCross.ID, restLength)
-                    if not ok:
-                        # 过路口失败，说明对面车道拥堵，行驶到路口最后位置
+                    if not ok and not needWait:
+                        # 过路口失败，且不需要等待，说明对面车道拥堵，行驶到路口最后位置
                         car_waiting.Move(road.len-car_waiting.CarIndex-1)
+                        # 调度一次该车道的其他车辆
+                        road.ChanRun(road.GetChannel(self.ID,chanIndex))
                         if restLength == 0:
                             car_waiting.CarAction("wait")
+                        continue
+                    elif not ok and needWait:
+                        # 过路口失败，且需要等待，则不做其他处理，等待前车先走。
+                        car_waiting.CarAction("wait")
+                        handleLen -= 1
+                        handledList.append(roadID)
                         break
-                    # 更新当前节点
-
                     # 离开老路
                     road.CarOut(car_waiting)
+                    # 调度一次该车道的其他车辆
+                    road.ChanRun(road.GetChannel(self.ID,chanIndex))
 
-        # 行驶剩余等待状态车辆
-        for road in self.Roads.values():
-            road.CarRun()
+        carWaiting=False
+        for roadIndex in range(0, len(roadList)):
+            roadID = roadList[roadIndex]
+            if roadID == -1:
+                continue
+            road = self.GetRoadByRoadID(roadID)
+            if road == None:
+                continue
+            carWaiting= road.CheckingHasActionWaiting(self.ID)
+            if carWaiting:
+                break
+       
+
+        if not carWaiting :
+            self.FrameComplete =True
 
     def GoRoad(self, count):
         waitCars = list([])
@@ -199,7 +228,7 @@ class Cross:
         while now < count and roadCount and len(self.Garage) > 0 and self.Garage[-1].ptime <= golablData.GlobalData.CurrentTime:
             car = self.Garage.pop(-1)
             # 规划路线
-            car.PathPlanning(car.GetStart(), False)
+            car.PathPlanning(car.GetStart(), True)
             crossTemp = car.Path[0]
             if crossTemp.ID == self.ID:
                 car.Path.pop(0)
@@ -215,16 +244,17 @@ class Cross:
                 waitCars.append(car)
                 continue
             # 判断是否合适上路
+            value = 0.6 
+
             count, maxCount = road.GetEmpty(crossTemp.ID, car)
-            if count / maxCount < 0.6:  #0.6最优
-            # if road.CarCount[crossTemp.ID] > road.chanCount * road.len / 4: 
+            if count / maxCount < value:  
                 roadCount -= 1 
                 roadBlock.append(road.ID)
                 waitCars.append(car)
-                continue 
+                break 
 
             # 进入道路
-            canEnter = road.CarEnter(car, crossTemp.ID)
+            canEnter,neenWait = road.CarEnter(car, crossTemp.ID)
             if not canEnter:
                 roadCount -= 1
                 roadBlock.append(road.ID)

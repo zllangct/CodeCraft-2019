@@ -89,10 +89,10 @@ class Car:
 
     def Think(self):
         if self.location == "cross":
-            if self.waitingTime > 10:
-                nextNode, end = self.NextCross()
+            if self.waitingTime > 5:
+                nextNode = self.NextCross()
                 nextRoad = self.NextRoad()
-                if end:
+                if nextNode ==None or nextNode ==None:
                     return
 
                 self.AddCongeestion(nextRoad.ID)

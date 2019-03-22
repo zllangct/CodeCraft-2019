@@ -77,7 +77,7 @@ class Road:
         # 承载量
         if self.CarCount[target.ID] > self.len*self.chanCount * 0.6:
             initWeight += int(self.CarCount[target.ID] -
-                              self.len*self.chanCount / 2.0) ** 2
+                              self.len*self.chanCount / 2.0) ** 3
 
         # 车道数量
         initWeight += (5 - self.chanCount) * 3
@@ -111,56 +111,67 @@ class Road:
     def MaxV(self, car):
         return min(car.vmax, self.vmax)
 
+    def CheckingHasActionWaiting(self,dir):
+        for chanIndex in range(0, self.chanCount):
+            chan = self.channels[dir][chanIndex]
+            for car in chan:
+                if car != None and car.state == Car.CarState.WaitingRun:
+                    return True
+        return False
+
+    def ChanRun(self,chan,isNewFrame=False):
+        # 遍历车辆,从出口向入口遍历
+        for carIndex in range(0, len(chan))[::-1]:
+            # 遍历
+            car = chan[carIndex]
+
+            if car == None:
+                continue
+
+            if isNewFrame:
+                car.state = Car.CarState.WaitingRun
+
+            if car.state == Car.CarState.ActionEnd:
+                continue
+
+            # 检查前面是否有车辆
+            isFront, frontIndex, frontState = car.CheckingFrontCar()
+            # 检查是否出路口
+            isOut = car.CheckingFrontCross()
+
+            # 检查是否到达终点
+            isDestination = car.CheckingDestination()
+            if isDestination and not isFront and isOut:
+                car.CarComplete()
+
+            # 正常行驶
+            if not isFront:
+                # 没有前车
+                if not isOut:
+                    # 没有前车 且 不出路口
+                    car.Move(self.MaxV(car))
+                    # 标记为终止状态
+                    car.ChangeState(Car.CarState.ActionEnd)
+                elif isOut:
+                    # 没有前车 且 可以出路口
+                    car.ChangeState(Car.CarState.WaitingRun)
+            else:
+                # 有前车
+                if frontState == Car.CarState.ActionEnd:
+                    # 如果前车终止
+                    v = min(frontIndex-carIndex-1, self.MaxV(car))
+                    car.Move(v)
+                elif frontState == Car.CarState.WaitingRun:
+                    # 前车等待状态
+                    car.ChangeState(Car.CarState.WaitingRun)
+
     def CarRun(self, isNewFrame=False):
-        # 遍历双向车道
+        # 遍历双向
         for roaddir in self.channels:
             # 遍历车道
             for chanIndex in range(0, self.chanCount):
                 chan = self.channels[roaddir][chanIndex]
-                # 遍历车辆,从出口向入口遍历
-                for carIndex in range(0, len(chan))[::-1]:
-                    # 遍历
-                    car = chan[carIndex]
-
-                    if car == None:
-                        continue
-
-                    if isNewFrame:
-                        car.state = Car.CarState.WaitingRun
-
-                    if car.state == Car.CarState.ActionEnd:
-                        continue
-
-                    # 检查前面是否有车辆
-                    isFront, frontIndex, frontState = car.CheckingFrontCar()
-                    # 检查是否出路口
-                    isOut = car.CheckingFrontCross()
-
-                    # 检查是否到达终点
-                    isDestination = car.CheckingDestination()
-                    if isDestination and not isFront and isOut:
-                        car.CarComplete()
-
-                    # 正常行驶
-                    if not isFront:
-                        # 没有前车
-                        if not isOut:
-                            # 没有前车 且 不出路口
-                            car.Move(self.MaxV(car))
-                            # 标记为终止状态
-                            car.ChangeState(Car.CarState.ActionEnd)
-                        elif isOut:
-                            # 没有前车 且 可以出路口
-                            car.ChangeState(Car.CarState.WaitingRun)
-                    else:
-                        # 有前车
-                        if frontState == Car.CarState.ActionEnd:
-                            # 如果前车终止
-                            v = min(frontIndex-carIndex-1, self.MaxV(car))
-                            car.Move(v)
-                        elif frontState == Car.CarState.WaitingRun:
-                            # 前车等待状态
-                            car.ChangeState(Car.CarState.WaitingRun)
+                self.ChanRun(chan,isNewFrame)
 
         # 遍历双向车道,统计道路信息
         carCount = 0
@@ -226,6 +237,8 @@ class Road:
             # 遍历车辆,从出口向入口遍历
             for carIndex in range(0, maxLen):
                 if chan[carIndex] != None:
+                    if chan[carIndex].state == Car.CarState.WaitingRun:
+                        return False,True
                     break
                 if chan[carIndex] == None:
                     targetChan = chan
@@ -236,14 +249,47 @@ class Road:
 
         # 如果没有位置可以停车，则返回失败
         if targetChan == None and targetIndex == None:
-            return False
+            return False,False
 
         chan[targetIndex] = car
         self.CarCount[dir] += 1
         self.Cars[car.ID] = (dir, chanIndex, targetIndex)
 
         car.EnterRoad(self, dir, chanIndex, targetIndex)
-        return True
+        return True,False
+
+    # # 车辆进入道路
+    # def CarEnter(self, car, dir, restLength=0):
+    #     # 计算在新道路上能行驶的最大距离
+    #     tmaxv = self.MaxV(car)
+    #     maxLen = tmaxv-restLength if tmaxv-restLength > 0 else 0
+
+    #     targetChan = None
+    #     targetIndex = None
+    #     # 遍历车道
+    #     for chanIndex in range(0, self.chanCount):
+    #         chan = self.channels[dir][chanIndex]
+    #         # 遍历车辆,从出口向入口遍历
+    #         for carIndex in range(0, maxLen):
+    #             if chan[carIndex] != None:
+    #                 break
+    #             if chan[carIndex] == None:
+    #                 targetChan = chan
+    #                 targetIndex = carIndex
+    #                 continue
+    #         if targetChan != None and targetIndex != None:
+    #             break
+
+    #     # 如果没有位置可以停车，则返回失败
+    #     if targetChan == None and targetIndex == None:
+    #         return False
+
+    #     chan[targetIndex] = car
+    #     self.CarCount[dir] += 1
+    #     self.Cars[car.ID] = (dir, chanIndex, targetIndex)
+
+    #     car.EnterRoad(self, dir, chanIndex, targetIndex)
+    #     return True
 
     def CarOut(self, car):
         dir, chanIndex, index = self.GetCarPosition(car)

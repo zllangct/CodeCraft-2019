@@ -85,11 +85,14 @@ def Process(car_path, road_path, cross_path, answer_path):
         print("程序运行时间：%f" % time.time().__sub__(startTime))
         print("调度时间:"+str(GlobalData.CurrentTime))
 
+    timeTotal = 0 
     # Write output data
     result = "#(carId,StartTime,RoadId...)\n"
     for car in GlobalData.cars:
         result += car.PathToString()
+        timeTotal+= car.etime-car.ptime+1
     GlobalData.Result = result
+    print("总调度时间：%d" % timeTotal)
     input.Write(GlobalData.Result)
 
 
@@ -108,14 +111,22 @@ def HandleRoad():
 
 
 def HandleCross():
-
     for cross in GlobalData.crosses:
-        cross.CarRun()
+        cross.FrameComplete=False
+
+    complete = len(GlobalData.crosses)
+    count=0
+    while(complete>0):
+        count+=1
+        for cross in GlobalData.crosses:
+            cross.CarRun(count)
+            if cross.FrameComplete:
+                complete-=1
 
 
 def HandleGarage():
     max = 1200 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 1000:
+    if GlobalData.Car_Road > 1200:
         max = 0
     else:
         if max <= 0:
@@ -123,7 +134,10 @@ def HandleGarage():
 
     every = int(max / 64.0)
 
-    # every = 5000
+    if GlobalData.ComplateCount > len(GlobalData.cars) * 0.8:
+        every+=100
+    # elif GlobalData.ComplateCount > len(GlobalData.cars) * 0.7:
+    #     every =0
 
     for cross in GlobalData.crosses:
         cross.GoRoad(every)
