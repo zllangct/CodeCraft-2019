@@ -125,8 +125,8 @@ def HandleCross():
 
 
 def HandleGarage():
-    max = 1200 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 1200:
+    max = 1800 - GlobalData.Car_Road
+    if GlobalData.Car_Road > 1800:
         max = 0
     else:
         if max <= 0:
