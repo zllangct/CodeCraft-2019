@@ -10,11 +10,12 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 def main():
-
-    car_path = "./config/car.txt"
-    road_path = "./config/road.txt"
-    cross_path = "./config/cross.txt"
-    answer_path = "./config/answer.txt"
+    config ="./1-map-training-1/"
+    # config ="./1-map-training-2/"
+    car_path = config+"car.txt"
+    road_path = config+"road.txt"
+    cross_path = config+"cross.txt"
+    answer_path = config+"answer.txt"
 
     if False:
         if len(sys.argv) != 5:

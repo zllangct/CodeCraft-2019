@@ -5,7 +5,7 @@ from heapq import heappush, heappop
 from itertools import count
 import golablData
 import Road
-import Cross
+import Cross 
 
 
 def Heuristic(currentCross, target):

@@ -119,14 +119,16 @@ def HandleCross():
     while(complete>0):
         count+=1
         for cross in GlobalData.crosses:
+            if cross.FrameComplete:
+                continue
             cross.CarRun(count)
             if cross.FrameComplete:
                 complete-=1
 
 
 def HandleGarage():
-    max = 1800 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 1800:
+    max = 750 - GlobalData.Car_Road
+    if GlobalData.Car_Road > 750:
         max = 0
     else:
         if max <= 0:

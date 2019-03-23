@@ -68,7 +68,7 @@ class Car:
         else:
             self.waitingTime = 0
 
-        self.Think()
+        # self.Think()
 
     def PrintPath(self):
         for ii in self.PathTemp:

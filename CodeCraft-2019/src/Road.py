@@ -72,7 +72,7 @@ class Road:
     # 计算道路权值
     def GetWeight(self, source, target, car):
         # 初始权值
-        initWeight = self.len*2
+        initWeight = self.len*3
 
         # 承载量
         if self.CarCount[target.ID] > self.len*self.chanCount * 0.6:
@@ -140,9 +140,9 @@ class Road:
             isOut = car.CheckingFrontCross()
 
             # 检查是否到达终点
-            isDestination = car.CheckingDestination()
-            if isDestination and not isFront and isOut:
-                car.CarComplete()
+            # isDestination = car.CheckingDestination()
+            # if isDestination and not isFront and isOut:
+            #     car.CarComplete()
 
             # 正常行驶
             if not isFront:
@@ -174,22 +174,25 @@ class Road:
                 self.ChanRun(chan,isNewFrame)
 
         # 遍历双向车道,统计道路信息
-        carCount = 0
-        for roaddir in self.channels:
-            self.RoadPrint(roaddir, False)
-            # 遍历车道
-            for chanIndex in range(0, self.chanCount):
-                chan = self.channels[roaddir][chanIndex]
-                # 遍历车辆,从出口向入口遍历
-                for carIndex in range(0, len(chan))[::-1]:
-                     # 遍历
-                    car = chan[carIndex]
-                    if car != None:
-                        carCount += 1
+        # carCount = 0
+        # for roaddir in self.channels:
+        #     self.RoadPrint(roaddir, False)
+        #     # 遍历车道
+        #     for chanIndex in range(0, self.chanCount):
+        #         chan = self.channels[roaddir][chanIndex]
+        #         # 遍历车辆,从出口向入口遍历
+        #         for carIndex in range(0, len(chan))[::-1]:
+        #              # 遍历
+        #             car = chan[carIndex]
+        #             if car != None:
+        #                 carCount += 1
 
         if not "CarInGarage" in golablData.GlobalData.StateInfo["RoadInfo"]:
             golablData.GlobalData.StateInfo["RoadInfo"]["CarInGarage"] = {}
 
+        carCount=0
+        for c in self.CarCount.values():
+            carCount+=c
         golablData.GlobalData.StateInfo["RoadInfo"]["CarInGarage"][self.ID] = carCount
 
     # 检查是否有向某个方向行驶的车辆
@@ -258,38 +261,38 @@ class Road:
         car.EnterRoad(self, dir, chanIndex, targetIndex)
         return True,False
 
-    # # 车辆进入道路
-    # def CarEnter(self, car, dir, restLength=0):
-    #     # 计算在新道路上能行驶的最大距离
-    #     tmaxv = self.MaxV(car)
-    #     maxLen = tmaxv-restLength if tmaxv-restLength > 0 else 0
+    # 车辆进入道路
+    def GetTailCar(self, car, dir, restLength=0):
+        # 计算在新道路上能行驶的最大距离
+        tmaxv = self.MaxV(car)
+        maxLen = tmaxv-restLength if tmaxv-restLength > 0 else 0
 
-    #     targetChan = None
-    #     targetIndex = None
-    #     # 遍历车道
-    #     for chanIndex in range(0, self.chanCount):
-    #         chan = self.channels[dir][chanIndex]
-    #         # 遍历车辆,从出口向入口遍历
-    #         for carIndex in range(0, maxLen):
-    #             if chan[carIndex] != None:
-    #                 break
-    #             if chan[carIndex] == None:
-    #                 targetChan = chan
-    #                 targetIndex = carIndex
-    #                 continue
-    #         if targetChan != None and targetIndex != None:
-    #             break
+        targetChan = None
+        targetIndex = None
+        frontCar =None
+        # 遍历车道
+        for chanIndex in range(0, self.chanCount):
+            chan = self.channels[dir][chanIndex]
+            # 遍历车辆,从出口向入口遍历
+            for carIndex in range(0, maxLen):
+                if chan[carIndex] != None:
+                    if chan[carIndex].state == Car.CarState.WaitingRun:
+                        frontCar=chan[carIndex]
+                        return False,frontCar
+                    frontCar=chan[carIndex]
+                    break
+                if chan[carIndex] == None:
+                    targetChan = chan
+                    targetIndex = carIndex
+                    continue
+            if targetChan != None and targetIndex != None:
+                break
 
-    #     # 如果没有位置可以停车，则返回失败
-    #     if targetChan == None and targetIndex == None:
-    #         return False
+        # 如果没有位置可以停车，则返回失败
+        if targetChan == None and targetIndex == None:
+            return False,False
 
-    #     chan[targetIndex] = car
-    #     self.CarCount[dir] += 1
-    #     self.Cars[car.ID] = (dir, chanIndex, targetIndex)
-
-    #     car.EnterRoad(self, dir, chanIndex, targetIndex)
-    #     return True
+        return True,frontCar
 
     def CarOut(self, car):
         dir, chanIndex, index = self.GetCarPosition(car)
