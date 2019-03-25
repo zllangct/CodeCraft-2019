@@ -2,9 +2,8 @@
 # -*- coding:utf-8 -*- 
 import numpy as np
 import logging
-import Car
-import golablData
-
+import simulator.Car as Car
+import simulator.golablData as golablData
 
 class Cross:
 
@@ -49,7 +48,7 @@ class Cross:
         self.Garage.append(car)
 
     def sortkey(self, item):
-        return (item.ptime, item.ID)
+        return (item.stime, item.ID)
 
     def GarageSort(self):
         self.Garage.sort(key=self.sortkey, reverse=True)
@@ -59,8 +58,6 @@ class Cross:
             return True, self.Roads[roadID]
         else:
             return False, None
-
-    
 
     def GetNeighbor(self):
         if self.Neighbor == None:
@@ -130,27 +127,7 @@ class Cross:
                 if not isOut:
                     road.ChanRun(road.GetChannel(self.ID,car_waiting.ChanIndex))
                     break
-
-                # car2,_ = road.GetCarWaitingSecond(self.ID)
-                # if car2 !=None and not car2.CheckingDestination():
-                #     car2NextCross = car2.NextCross()
-                #     car2NextRoad = car2.NextRoad()
-                #     if car2NextRoad.CarCount[car2NextCross.ID] > car2NextRoad.chanCount * car2NextRoad.len / 1.5:  # 1.5 最佳
-                #         # if len(car_waiting.Path) < len(car_waiting.PathPassing)
-                #         car2.AddBlocking(car2NextRoad.ID)
-                #         car2.PathPlanning(car2.CurrentCross, True)
-
-
-                # if targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 1.5:  # 1.5 最佳
-                #     # if len(car_waiting.Path) < len(car_waiting.PathPassing)
-                #     car_waiting.AddBlocking(targetRoad.ID)
-                #     car_waiting.PathPlanning(
-                #         car_waiting.CurrentCross, True)
-
-                #     targetCross = car_waiting.NextCross()
-                #     targetRoad = self.GetRoadByEndID(targetCross.ID)
-
-                
+            
                 # 检查是否到达终点
                 isDestination = car_waiting.CheckingDestination()
                 if isDestination:
@@ -163,6 +140,7 @@ class Cross:
                 targetRoad = self.GetRoadByEndID(targetCross.ID)
                 targetRoadID = targetRoad.ID
                 direction = self.GetDir(road.ID, targetRoadID)
+                
                 # 检查冲突车辆
                 if direction == self.D:
                     # 直行，优先不用检查
@@ -226,22 +204,13 @@ class Cross:
         if not carWaiting :
             self.FrameComplete =True
 
-    def GoRoad(self, count):
-        waitCars = list([])
-        roadCount = len(self.Roads)
-        roadBlock = list([])
-        now = 0
-        ptime = self.Garage[-1].ptime if len(self.Garage)>0 else 1000000
-        while now < count and roadCount and len(self.Garage) > 0 and ptime <= golablData.GlobalData.CurrentTime:
+    def GoRoad(self):
+        # 序号小的车未能上路成功，排在后面的车是否能够上路？TODO
+        while len(self.Garage) > 0 and self.Garage[-1].stime == golablData.GlobalData.CurrentTime:
             car = self.Garage.pop(-1)
-            if car.ptime != ptime:
-                waitCars.append(car)
-                break
             if car.startID != self.ID:
                 raise RuntimeError("invalid car") 
 
-            # 规划路线
-            car.PathPlanning(car.GetStart(), False)
             crossTemp = car.Path[0]
             if crossTemp.ID == self.ID:
                 car.Path.pop(0)
@@ -252,51 +221,13 @@ class Cross:
             if road == None:
                 raise RuntimeError("invalid car")
 
-            if (road.ID in roadBlock):
-                waitCars.append(car)
-                continue
-
-
-            # canEnter1,frontCar= road.GetTailCar(car, crossTemp.ID)
-            # if not canEnter1:
-            #     roadCount -= 1
-            #     roadBlock.append(road.ID)
-            #     waitCars.append(car)
-            #     continue
-            # if frontCar != None and road.MaxV(frontCar) < road.MaxV(car):
-            #     roadCount -= 1
-            #     roadBlock.append(road.ID)
-            #     waitCars.append(car)
-            #     continue
-
-            # 判断是否合适上路
-            # value = 0.6 
-
-            # count, maxCount = road.GetEmpty(crossTemp.ID, car)
-            # if count / maxCount < value:  
-            #     roadCount -= 1 
-            #     roadBlock.append(road.ID)
-            #     waitCars.append(car)
-            #     break 
-
-            
-
             # 进入道路
             canEnter,neenWait = road.CarEnter(car, crossTemp.ID)
             if not canEnter or neenWait:
-                roadCount -= 1
-                roadBlock.append(road.ID)
-                waitCars.append(car)
-                break
+                raise RuntimeError("invalid car")
 
-            # 上路时间
-            car.stime = golablData.GlobalData.CurrentTime
-
-            now += 1
             continue
 
-        for w in waitCars[::-1]:
-            self.Garage.append(w)
 
         if not "CarInGarage" in golablData.GlobalData.StateInfo["CrossInfo"]:
             golablData.GlobalData.StateInfo["CrossInfo"]["CarInGarage"] = {}

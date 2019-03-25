@@ -1,6 +1,7 @@
 import logging
 import sys
-import processing
+import processing 
+import simulator.processing as p
 
 logging.basicConfig(level=logging.DEBUG,
                     filename='../logs/CodeCraft-2019.log',
@@ -10,8 +11,8 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 def main():
-    config ="./1-map-training-1/"
-    # config ="./1-map-training-2/"
+    # config ="./1-map-training-1/"
+    config ="./1-map-training-2/"
     car_path = config+"car.txt"
     road_path = config+"road.txt"
     cross_path = config+"cross.txt"

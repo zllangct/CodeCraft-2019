@@ -2,9 +2,9 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import logging
-import Car
-import golablData
-
+import simulator.Car as Car
+import simulator.golablData as golablData
+ 
 
 class Road:
     def __init__(self, id, len, vmax, chanCount, startID, endID, isBothway):
@@ -31,7 +31,6 @@ class Road:
                 self.channels[roaddir].append([None for i in range(self.len)])
 
         # # print("")
-
     def GetHash(self):
         sum = 0
         # 遍历双向
@@ -52,12 +51,14 @@ class Road:
 
     def GetStartCross(self):
         return self.Cross[self.startID]
-
+    
     def GetOppositeCross(self,crossID):
         for c in self.Cross.values():
             if c.ID != crossID:
                 return c
-                
+
+    
+
     # 返回车道数据 index 从1开始
     def GetChannel(self, dir, index):
         if index >= self.chanCount or not (dir in self.channels):

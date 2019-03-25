@@ -3,13 +3,13 @@
 import io
 import os,re
 import numpy as np
-import Car
-import Road 
-import Cross
+import simulator.Car as Car
+import simulator.Road as Road
+import simulator.Cross as Cross
 
-
+ 
 class TextIO:
-
+    
     def __init__(self, path_car, path_road, path_cross, path_out):
         # print("TextIO Constructor")
         self.path_car = path_car
@@ -62,21 +62,19 @@ class TextIO:
         return roads, cars, crosses
     def ReadAnswer(self):
         # print("Read data")
-        cars = list([])
-        crosses = list([])
-        roads = list([])
+        answers = {}
 
         # Read car data
-        with open(self.path_car, "r") as f1:
+        with open(self.path_out, "r") as f1:
             lines = f1.readlines()
             for line in lines:
                 if line.startswith("#"):
                     continue
                 args = [item for item in filter(
                     lambda x:x != '', re.split("[(),\n]", line))]
-                car = Car.Car(int(args[0]), int(args[1]), int(
-                    args[2]), int(args[3]), int(args[4]))
-                cars.append(car)
+                answer=(args[0],args[1],args[2:])
+                answers[int(args[0])]=answer
+        return answers
                 
     def Write(self, answer):
         # print("Write data")

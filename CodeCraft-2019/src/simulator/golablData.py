@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 
-import CrossMap
+import simulator.CrossMap as CrossMap
 
 
 class globalData:

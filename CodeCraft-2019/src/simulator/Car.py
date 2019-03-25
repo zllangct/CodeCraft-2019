@@ -2,15 +2,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import logging
-import golablData
-import astar
-
+import simulator.golablData as golablData
 
 class CarState:
     Null = -1
     WaitingRun = 1
     ActionEnd = 2
-
 
 class Car:
     def __init__(self, id, startID, endID, vmax, ptime):
@@ -27,7 +24,7 @@ class Car:
         self.end = None
         self.state = CarState.Null
         self.CurrentRoad = None
-        self.Path = None
+        self.Path = None 
         self.PathTemp = []
         self.PathPassing = list([])
         self.CurrentCross = None
@@ -92,8 +89,6 @@ class Car:
         else:
             self.waitingTime = 0
 
-        # self.Think()
-
     def PrintPath(self):
         for ii in self.PathTemp:
             sstr = ""
@@ -111,46 +106,6 @@ class Car:
             self.uniqueInfo["congestion"] = []
         self.uniqueInfo["congestion"].append(roadID)
 
-    def Think(self):
-        if self.location == "cross":
-            if self.waitingTime > 5:
-                nextNode = self.NextCross()
-                nextRoad = self.NextRoad()
-                if nextNode ==None or nextNode ==None:
-                    return
-
-                self.AddCongeestion(nextRoad.ID)
-                
-
-                self.AddBlocking(self.CurrentRoad.ID)
-
-                self.PathPlanning(self.CurrentCross, True)
-
-                self.uniqueInfo["block"] = []
-                self.uniqueInfo["congestion"] = []
-
-                self.waitingTime = 0
-
-            # if len(self.vpassing) > 4 and self.vaverage < 1.5 :
-
-            #     nextRoad= self.NextRoad()
-            #     if nextRoad ==None:
-            #         return
-            #     self.AddBlocking(nextRoad.ID)
-            #     self.PathPlanning(self.CurrentCross,True)
-
-            #     self.uniqueInfo["block"]=[]
-            #     self.uniqueInfo["congestion"]=[]
-
-            # nextRoad = self.NextRoad()
-            # nextNode = self.NextCross()
-
-            # if nextRoad and nextNode and nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
-            #     self.AddBlocking(nextRoad.ID)
-            #     self.PathPlanning(self.CurrentCross, True)
-
-            #     self.uniqueInfo["block"] = []
-            #     self.uniqueInfo["congestion"] = []
 
     def GetStart(self):
         if self.start == None:
@@ -162,31 +117,9 @@ class Car:
             self.end = golablData.GlobalData.Map[self.endID]
         return self.end
 
-    # 规划路径
-    def PathPlanning(self, currentCross, rePlan=False):
-        if self.Path == None or rePlan:
-            if len(self.PathPassing) > 0:
-                for path in self.PathPassing:
-                    self.AddBlocking(path.ID)
-                # self.AddBlocking(self.PathPassing[-1].ID)
-
-            p = astar.astar(golablData.GlobalData.Map, currentCross,
-                            self.GetEnd(), self, self.uniqueInfo)
-            self.uniqueInfo["block"] = []
-            self.uniqueInfo["congestion"] = []
-            if p == None:
-                return
-            self.Path = p
-            self.PathTemp.append(self.Path.copy())
-
-            # debug TODO
-            debugPrint = False
-            if debugPrint:
-                self.PrintPath()
-
     def NextCross(self):
         if len(self.Path) > 0:
-            if self.CurrentCross and self.Path[0].ID == self.CurrentCross.ID:
+            if self.CurrentCross and self.Path[0].ID == self.CurrentCross.ID: 
                 self.Path.pop(0)
             if len(self.Path) > 0:
                 return self.Path[0]

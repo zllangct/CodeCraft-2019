@@ -5,7 +5,7 @@ from heapq import heappush, heappop
 from itertools import count
 import golablData
 import Road
-import Cross 
+import Cross  
 
 
 def Heuristic(currentCross, target):
@@ -71,7 +71,7 @@ def astar(Map, source, target, car, carUnique=None, heuristic=Heuristic):
 
                 if "congestion" in carUnique:
                     if road.ID in carUnique["congestion"]:
-                        unique += 1000
+                        unique += 100
 
             if car.CurrentRoad != None:
                 if road.ID == car.CurrentRoad.ID:
