@@ -31,6 +31,7 @@ class Cross:
         self.RoadIDs.append(road2)
         self.RoadIDs.append(road3)
         self.RoadIDs.append(road4)
+        self.CarsOut=list([])
 
         self.Garage = list([])
         self.FrameComplete =False
@@ -225,7 +226,7 @@ class Cross:
             canEnter,neenWait = road.CarEnter(car, crossTemp.ID)
             if not canEnter or neenWait:
                 raise RuntimeError("invalid car")
-
+            self.CarsOut.append(car.ID)
             continue
 
 

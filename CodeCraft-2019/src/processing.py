@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import textio 
 from golablData import GlobalData
-from Global import Global
 import CrossMap
 import dijkstra
 import time
@@ -56,7 +55,8 @@ def Process(car_path, road_path, cross_path, answer_path):
     for cross in GlobalData.crosses:
         cross.GarageSort()
     # simulator
-    PP.Process(car_path, road_path, cross_path, answer_path)
+    if simulate:
+        PP.Process(car_path, road_path, cross_path, answer_path)
 
     # Main logic loop
     Loop()
@@ -103,24 +103,20 @@ def Loop():
     
     while GlobalData.State == 1:
         GlobalData.CurrentTime += 1
-        Global.FrameTime = GlobalData.CurrentTime
-
         PP.GlobalData.CurrentTime += 1
-        PP.Global.FrameTime = GlobalData.CurrentTime
 
         Frame()
 
         # 信息统计
-        roadInfo = GlobalData.StateInfo["RoadInfo"]["CarInGarage"]
         roadCarCount = 0
-        for _carCount in roadInfo.values():
-            roadCarCount += _carCount
+        for road in GlobalData.crosses:
+            for d in road.CarCount.values():
+                roadCarCount+=d
         GlobalData.Car_Road = roadCarCount
 
-        crossInfo = GlobalData.StateInfo["CrossInfo"]["CarInGarage"]
         crossCarCount = 0
-        for _carCount in crossInfo.values():
-            crossCarCount += _carCount
+        for cross in GlobalData.crosses:
+            crossCarCount+=len(cross.Garage)
         GlobalData.Car_Garage = crossCarCount
         # simulator ------------------------------------------
         if simulate:
@@ -220,8 +216,8 @@ def HandleCross():
 
 
 def HandleGarage():
-    max = 700 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 700:
+    max = 500 - GlobalData.Car_Road
+    if GlobalData.Car_Road > 500:
         max = 0
     else:
         if max <= 0:

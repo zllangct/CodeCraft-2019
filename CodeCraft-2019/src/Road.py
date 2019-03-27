@@ -4,33 +4,49 @@ import numpy as np
 import logging
 import Car
 import golablData
+import copy
 
 
 class Road:
     def __init__(self, id, len, vmax, chanCount, startID, endID, isBothway):
+        # 不变量
         self.Cross = {}
-        self.Weight = {}
-
         self.ID = id
         self.len = len
-        # 权重默认为长度
-        self.Weight[startID] = len
-        self.Weight[endID] = len
         self.vmax = vmax
         self.chanCount = chanCount
         self.startID = startID
         self.endID = endID
         self.isBothway = isBothway
-        self.Cars = {}
-        self.CarCount = {self.startID: 0, self.endID: 0}
 
-        # 初始化车道里面的车车
+        # 变化量
+        self.CarCount = {self.startID: 0, self.endID: 0}
+        self.Cars = {}
+
         self.channels = {self.startID: list([]), self.endID: list([])}
         for roaddir in self.channels:
             for _ in range(0, self.chanCount):
                 self.channels[roaddir].append([None for i in range(self.len)])
+        # 帧缓存
+        self.LastFrame = None
 
-        # # print("")
+    def TempFrame(self):
+        if self.LastFrame ==None: 
+            self.LastFrame=copy.copy(self)
+        self.LastFrame.Cars = copy.copy(self.Cars)
+        self.LastFrame.channels = copy.copy(self.channels)
+        self.LastFrame.CarCount = copy.copy(self.CarCount)
+        for roaddir in self.LastFrame.channels:
+            self.LastFrame.channels[roaddir] = []
+            for chanIndex in range(0, self.chanCount):
+                self.LastFrame.channels[roaddir].append(copy.copy(self.channels[roaddir][chanIndex]))
+    
+    def BackFrame(self):
+        self.CarCount = self.LastFrame.CarCount
+        self.Cars = self.LastFrame.Cars
+        for roaddir in self.channels:
+            for _ in range(0, self.chanCount):
+                self.channels[roaddir]=self.LastFrame.channels[roaddir]
 
     def GetHash(self):
         sum = 0
@@ -57,7 +73,7 @@ class Road:
         for c in self.Cross.values():
             if c.ID != crossID:
                 return c
-                
+
     # 返回车道数据 index 从1开始
     def GetChannel(self, dir, index):
         if index >= self.chanCount or not (dir in self.channels):
@@ -89,7 +105,7 @@ class Road:
     # 计算道路权值
     def GetWeight(self, source, target, car):
         # 初始权值
-        initWeight = self.len*3
+        initWeight = self.len*2
 
         # 承载量
         if self.CarCount[target.ID] > self.len*self.chanCount * 0.6:
@@ -112,11 +128,11 @@ class Road:
     def RoadPrint(self, dir, temp=False):
         if not golablData.GlobalData.Debug and not temp:
             return
-        start = self.startID if dir != self.endID else self.endID
+        start = self.startID if dir == self.endID else self.endID
         print("=======起点：%d========道路ID：%d=====终点：%d==========================================================" % (start, self.ID, dir))
-        for _chanIndex in range(0, self.chanCount):
+        for _chanIndex in range(0, self.chanCount): 
             _sstr = "车道 [ %d ] :" % (_chanIndex+1)
-            _chan = self.channels[start][_chanIndex]
+            _chan = self.channels[dir][_chanIndex]
             for _car in _chan:
                 _sstr += ("% 6d" % _car.ID) if _car != None else "% 6d" % 0
             print(_sstr)
@@ -146,6 +162,9 @@ class Road:
                 continue
 
             if isNewFrame:
+                if car.LastFrameTime < golablData.GlobalData.CurrentTime:
+                    car.TempFrame()
+                    car.LastFrameTime = golablData.GlobalData.CurrentTime
                 car.state = Car.CarState.WaitingRun
 
             if car.state == Car.CarState.ActionEnd:
@@ -190,13 +209,6 @@ class Road:
                 chan = self.channels[roaddir][chanIndex]
                 self.ChanRun(chan,isNewFrame)
 
-        if not "CarInGarage" in golablData.GlobalData.StateInfo["RoadInfo"]:
-            golablData.GlobalData.StateInfo["RoadInfo"]["CarInGarage"] = {}
-
-        carCount=0
-        for c in self.CarCount.values():
-            carCount+=c
-        golablData.GlobalData.StateInfo["RoadInfo"]["CarInGarage"][self.ID] = carCount
 
     # 检查是否有向某个方向行驶的车辆
     def CheckingOutDir(self, cross, dir):
@@ -254,6 +266,7 @@ class Road:
                     elif car.state == Car.CarState.WaitingRun:
                         if count == 0:
                            count+=1
+                           continue
                         else:     
                             return car, row
 

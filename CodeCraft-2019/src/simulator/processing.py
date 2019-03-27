@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import simulator.textio as textio
 from simulator.golablData import GlobalData
-from simulator.Global import Global
 import simulator.CrossMap as CrossMap
 import time
 import copy,sys

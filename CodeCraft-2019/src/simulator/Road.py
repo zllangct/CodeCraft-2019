@@ -9,13 +9,9 @@ import simulator.golablData as golablData
 class Road:
     def __init__(self, id, len, vmax, chanCount, startID, endID, isBothway):
         self.Cross = {}
-        self.Weight = {}
-
         self.ID = id
         self.len = len
-        # 权重默认为长度
-        self.Weight[startID] = len
-        self.Weight[endID] = len
+
         self.vmax = vmax
         self.chanCount = chanCount
         self.startID = startID
@@ -113,11 +109,11 @@ class Road:
     def RoadPrint(self, dir, temp=False):
         if not golablData.GlobalData.Debug and not temp:
             return
-        start = self.startID if dir != self.endID else self.endID
+        start = self.startID if dir == self.endID else self.endID
         print("=======起点：%d========道路ID：%d=====终点：%d==========================================================" % (start, self.ID, dir))
-        for _chanIndex in range(0, self.chanCount):
+        for _chanIndex in range(0, self.chanCount): 
             _sstr = "车道 [ %d ] :" % (_chanIndex+1)
-            _chan = self.channels[start][_chanIndex]
+            _chan = self.channels[dir][_chanIndex]
             for _car in _chan:
                 _sstr += ("% 6d" % _car.ID) if _car != None else "% 6d" % 0
             print(_sstr)

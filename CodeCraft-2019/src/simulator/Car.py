@@ -43,29 +43,6 @@ class Car:
         self.vpassing = []
         self.vaverage = 0
 
-    def Reset(self):
-        self.stime = None
-        self.etime = None
-        self.state = CarState.Null
-        self.CurrentRoad = None
-        self.PathTemp = []
-        self.PathPassing = list([])
-        self.CurrentCross = None
-        self.CrossPassing = list([])
-
-        self.isComplate = False
-
-        self.ChanIndex = 0
-        self.CarIndex = 0
-        self.FrontDir = 0
-
-        # 用于决策
-        self.waitingTime = 0
-        self.location = "garage"
-        self.uniqueInfo = {}
-        self.vpassing = []
-        self.vaverage = 0
-
     def PathToString(self):
         sstr = "("+str(self.ID)+"," + str(self.stime)
         for road in self.PathPassing:

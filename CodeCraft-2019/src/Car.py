@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import golablData
 import astar
+import copy
 
 
 class CarState:
@@ -14,60 +15,84 @@ class CarState:
 
 class Car:
     def __init__(self, id, startID, endID, vmax, ptime):
+        # 不变的
         self.ID = id
         self.startID = startID
         self.endID = endID
         self.vmax = vmax
-        # 计划上路时间
         self.ptime = ptime
-        # 上路时间
-        self.stime = None
-        self.etime = None
         self.start = None
         self.end = None
-        self.state = CarState.Null
-        self.CurrentRoad = None
-        self.Path = None
-        self.PathTemp = []
-        self.PathPassing = list([])
-        self.CurrentCross = None
-        self.CrossPassing = list([])
 
-        self.isComplate = False
-
-        self.ChanIndex = 0
-        self.CarIndex = 0
-        self.FrontDir = 0
-
-        # 用于决策
-        self.waitingTime = 0
-        self.location = "garage"
-        self.uniqueInfo = {}
-        self.vpassing = []
-        self.vaverage = 0
-
-    def Reset(self):
+        # 变化的
         self.stime = None
         self.etime = None
         self.state = CarState.Null
-        self.CurrentRoad = None
-        self.PathTemp = []
-        self.PathPassing = list([])
-        self.CurrentCross = None
-        self.CrossPassing = list([])
-
         self.isComplate = False
-
         self.ChanIndex = 0
         self.CarIndex = 0
         self.FrontDir = 0
-
-        # 用于决策
         self.waitingTime = 0
         self.location = "garage"
-        self.uniqueInfo = {}
-        self.vpassing = []
-        self.vaverage = 0
+        self.CurrentRoad = None
+        self.CurrentCross = None
+        
+        self.Path = None
+        self.PathTemp = []
+        self.PathPassing = []
+        self.CrossPassing = []
+        self.uniqueInfo = {}       
+        self.vpassing = []  
+           
+        self.LastFrame = None
+        self.LastFrameTime = -1
+    
+    def TempFrame(self):
+        if self.LastFrame ==None: 
+            self.LastFrame=copy.copy(self)
+
+        self.LastFrame.stime =        self.LastFrame.stime  
+        self.LastFrame.etime =        self.etime  
+        self.LastFrame.state =        self.state 
+        self.LastFrame.isComplate =   self.isComplate 
+        self.LastFrame.ChanIndex =    self.ChanIndex  
+        self.LastFrame.CarIndex =     self.CarIndex 
+        self.LastFrame.FrontDir =     self.FrontDir  
+        self.LastFrame.waitingTime =  self.waitingTime 
+        self.LastFrame.location =     self.location 
+        self.LastFrame.CurrentRoad =  self.CurrentRoad 
+        self.LastFrame.CurrentCross = self.CurrentCross
+        self.LastFrame.LastFrameTime = self.LastFrameTime
+
+        self.LastFrame.Path = copy.copy(self.Path)
+        self.LastFrame.PathTemp = copy.copy(self.PathTemp)
+        self.LastFrame.PathPassing = copy.copy(self.PathPassing)
+        self.LastFrame.CrossPassing = copy.copy(self.CrossPassing)
+        self.LastFrame.uniqueInfo = copy.deepcopy(self.uniqueInfo)
+        self.LastFrame.vpassing = copy.copy(self.vpassing)
+
+
+    def BackFrame(self):
+        if self.LastFrameTime > -1 and self.LastFrameTime == golablData.GlobalData.CurrentTime:
+            self.stime =        self.LastFrame.stime  
+            self.etime =        self.LastFrame.etime  
+            self.state =        self.LastFrame.state 
+            self.isComplate =   self.LastFrame.isComplate 
+            self.ChanIndex =    self.LastFrame.ChanIndex  
+            self.CarIndex =     self.LastFrame.CarIndex 
+            self.FrontDir =     self.LastFrame.FrontDir  
+            self.waitingTime =  self.LastFrame.waitingTime 
+            self.location =     self.LastFrame.location 
+            self.CurrentRoad =  self.LastFrame.CurrentRoad 
+            self.CurrentCross = self.LastFrame.CurrentCross
+            self.LastFrameTime = self.LastFrame.LastFrameTime
+
+            self.Path = self.LastFrame.Path
+            self.PathTemp = self.LastFrame.PathTemp
+            self.PathPassing = self.LastFrame.PathPassing
+            self.CrossPassing = self.LastFrame.CrossPassing
+            self.uniqueInfo =  self.LastFrame.uniqueInfo
+            self.vpassing = self.LastFrame.vpassing
 
     def PathToString(self):
         sstr = "("+str(self.ID)+"," + str(self.stime)
@@ -92,8 +117,6 @@ class Car:
         else:
             self.waitingTime = 0
 
-        # self.Think()
-
     def PrintPath(self):
         for ii in self.PathTemp:
             sstr = ""
@@ -110,47 +133,6 @@ class Car:
         if not "congestion" in self.uniqueInfo:
             self.uniqueInfo["congestion"] = []
         self.uniqueInfo["congestion"].append(roadID)
-
-    def Think(self):
-        if self.location == "cross":
-            if self.waitingTime > 5:
-                nextNode = self.NextCross()
-                nextRoad = self.NextRoad()
-                if nextNode ==None or nextNode ==None:
-                    return
-
-                self.AddCongeestion(nextRoad.ID)
-                
-
-                self.AddBlocking(self.CurrentRoad.ID)
-
-                self.PathPlanning(self.CurrentCross, True)
-
-                self.uniqueInfo["block"] = []
-                self.uniqueInfo["congestion"] = []
-
-                self.waitingTime = 0
-
-            # if len(self.vpassing) > 4 and self.vaverage < 1.5 :
-
-            #     nextRoad= self.NextRoad()
-            #     if nextRoad ==None:
-            #         return
-            #     self.AddBlocking(nextRoad.ID)
-            #     self.PathPlanning(self.CurrentCross,True)
-
-            #     self.uniqueInfo["block"]=[]
-            #     self.uniqueInfo["congestion"]=[]
-
-            # nextRoad = self.NextRoad()
-            # nextNode = self.NextCross()
-
-            # if nextRoad and nextNode and nextRoad.CarCount[nextNode.ID] > nextRoad.chanCount * nextRoad.len / 3:
-            #     self.AddBlocking(nextRoad.ID)
-            #     self.PathPlanning(self.CurrentCross, True)
-
-            #     self.uniqueInfo["block"] = []
-            #     self.uniqueInfo["congestion"] = []
 
     def GetStart(self):
         if self.start == None:
@@ -272,4 +254,5 @@ class Car:
 
         self.OutRoad()
         self.etime = golablData.GlobalData.CurrentTime
+        self.LastFrameTime = golablData.GlobalData.CurrentTime
         golablData.GlobalData.CarComplete(self)

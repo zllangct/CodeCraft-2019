@@ -1,6 +1,7 @@
 import logging
 import sys
-import processing 
+import processing
+import processingback as pb 
 import simulator.processing as p
 
 logging.basicConfig(level=logging.DEBUG,
@@ -12,7 +13,8 @@ logging.basicConfig(level=logging.DEBUG,
 
 def main():
     # config ="./1-map-training-1/"
-    config ="./1-map-training-2/"
+    # config ="./1-map-training-2/"
+    config ="./config/"
     car_path = config+"car.txt"
     road_path = config+"road.txt"
     cross_path = config+"cross.txt"
@@ -34,7 +36,9 @@ def main():
     logging.info("cross_path is %s" % (cross_path))
     logging.info("answer_path is %s" % (answer_path))
 
-    processing.Process(car_path, road_path, cross_path, answer_path)
+    # processing.Process(car_path, road_path, cross_path, answer_path)
+    pb.Process(car_path, road_path, cross_path, answer_path)
+
 
 
 if __name__ == "__main__":
