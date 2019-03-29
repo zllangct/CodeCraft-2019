@@ -5,15 +5,11 @@ from golablData import GlobalData
 import CrossMap
 import dijkstra
 import time
-import copy,sys
-import simulator.processing as PP 
+import copy,sys,random
 
-sys.setrecursionlimit(1000000)
-simulate =False
-
-def Process(car_path, road_path, cross_path, answer_path):
+def Process(car_path, road_path, cross_path, answer_path,temp_path):
     # print("program start...")
-
+    sys.setrecursionlimit(1000000)
     # Read input data
     input = textio.TextIO(car_path, road_path, cross_path, answer_path)
     GlobalData.roads, GlobalData.cars, GlobalData.crosses = input.ReadAll()
@@ -51,152 +47,123 @@ def Process(car_path, road_path, cross_path, answer_path):
         start = car.GetStart()
         start.EnterGarage(car)
 
-    # garage sort
-    for cross in GlobalData.crosses:
-        cross.GarageSort()
-    # simulator
-    if simulate:
-        PP.Process(car_path, road_path, cross_path, answer_path)
-
     # Main logic loop
-    Loop()
+    
+    TempData()
 
-    # checking
+    tTime,tTotalTime,seed,GlobalData.MaxInRoad= input.ReadTemp(temp_path)
+    status = 0
+    while(True):
+
+        BackData()
+        TempData()
+        if status == 0:
+            GlobalData.MaxInRoad+=100
+            seed = time.time()
+            # seed = 1553857603
+            random.seed(seed)
+            GlobalData.Change={}
+            GlobalData.ChangeTemp={}
+        else:
+            GlobalData.MaxInRoad-=100
+            GlobalData.ChangeTemp= copy.deepcopy(GlobalData.Change)
+
+
+        GlobalData.MaxInRoad=1800
+
+        
+        
+        print("-------种子：%d 最大行车量：%d 最好成绩：%d------------------------------------------------------------------------" % (
+            seed,GlobalData.MaxInRoad,tTime))
+        status,t,tt= Loop()
+        if status == -1:
+            continue
+
+        if t<tTime or t==tTime and tt<tTotalTime:
+            input.WriteTemp(temp_path,t,tt,seed,GlobalData.MaxInRoad) 
+            tTime=t
+            tTotalTime=tt
+        
+        print("\n结果：调度时间： %d ,总调度时间：%d \n" % (t,tt))
+
+        # Write output data
+        result = "#(carId,StartTime,RoadId...)\n"
+        for car in GlobalData.cars:
+            result += car.PathToString()
+        GlobalData.Result = result
+
+        input.Write(GlobalData.Result)
+
+def TempData():
+    for road in GlobalData.roads:
+        road.TempFrame()
     for car in GlobalData.cars:
-        if car.isComplate ==False:
-            print(car.ID)
+        car.TempFrame()
+    for cross in GlobalData.crosses:
+        cross.TempFrame()
+    GlobalData.TempFrame()
+
+def BackData():
+    for road in GlobalData.roads:
+        road.BackFrame()
+    for car in GlobalData.cars:
+        car.BackFrame()
+    for cross in GlobalData.crosses:
+        cross.BackFrame()
+    GlobalData.BackFrame()
+
+def Loop(seed = 0):
+    GlobalData.State = 1
+    GlobalData.CurrentTime = 0
+    GlobalData.StartTime = time.time()
+
+    while GlobalData.State == 1:
+        GlobalData.CurrentTime += 1
+        status = Frame()
+        if status == -1:
+            return status,0,0
+
+       
+    Info()
 
     timeTotal = 0 
     # Write output data
-    result = "#(carId,StartTime,RoadId...)\n"
     for car in GlobalData.cars:
-        result += car.PathToString()
         timeTotal+= car.etime-car.ptime
-    GlobalData.Result = result
-    print("总调度时间：%d" % timeTotal)
+    return 0,GlobalData.CurrentTime,timeTotal    
 
-    if simulate:
-        PP_timeTotal = 0
-        for car in PP.GlobalData.cars:
-            PP_timeTotal+= car.etime-car.ptime
-        GlobalData.Result = result
-        print("PP总调度时间：%d" % PP_timeTotal)
+def Info():
+    roadCarCount = 0
+    for road in GlobalData.roads:
+        for d in road.CarCount.values():
+            roadCarCount+=d
+    GlobalData.Car_Road = roadCarCount
 
-    input.Write(GlobalData.Result)
+    crossCarCount = 0
+    for cross in GlobalData.crosses:
+        crossCarCount+=len(cross.Garage)
+    GlobalData.Car_Garage = crossCarCount
 
-
-def Loop():
-    RunV = 0.0
-    CompPre = 0
-    CarMax = 0
-
-    PP_RunV = 0.0
-    PP_CompPre = 0
-    PP_CarMax = 0
-
-    GlobalData.State = 1
-    GlobalData.CurrentTime = 0
-    startTime = time.time()
-
-    PP.GlobalData.State = 1
-    PP.GlobalData.CurrentTime = 0
-    
-    while GlobalData.State == 1:
-        GlobalData.CurrentTime += 1
-        PP.GlobalData.CurrentTime += 1
-
-        Frame()
-
-        # 信息统计
-        roadCarCount = 0
-        for road in GlobalData.crosses:
-            for d in road.CarCount.values():
-                roadCarCount+=d
-        GlobalData.Car_Road = roadCarCount
-
-        crossCarCount = 0
-        for cross in GlobalData.crosses:
-            crossCarCount+=len(cross.Garage)
-        GlobalData.Car_Garage = crossCarCount
-        # simulator ------------------------------------------
-        if simulate:
-            PP_roadInfo = PP.GlobalData.StateInfo["RoadInfo"]["CarInGarage"]
-            PP_roadCarCount = 0
-            for _carCount in PP_roadInfo.values():
-                PP_roadCarCount += _carCount
-            PP.GlobalData.Car_Road = PP_roadCarCount
-
-            PP_crossInfo = PP.GlobalData.StateInfo["CrossInfo"]["CarInGarage"]
-            PP_crossCarCount = 0
-            for _carCount in PP_crossInfo.values():
-                PP_crossCarCount += _carCount
-            PP.GlobalData.Car_Garage = PP_crossCarCount
-        # ------------------------------------------
-        v = GlobalData.ComplateCount-CompPre
-        if v > RunV:
-            CarMax = roadCarCount
-            RunV = v
-        CompPre = GlobalData.ComplateCount
-
-        print("当前道路中的车辆：%d" % roadCarCount)
-        print("车库中的车辆：%d" % crossCarCount)
-        print("到达终点车辆：%d" % GlobalData.ComplateCount)
-        print("到达量：%d  最大值：%d  最大值时道路承载量：%d  车辆综合检查: %d" % (v, RunV, CarMax, roadCarCount+crossCarCount+GlobalData.ComplateCount))
-        print("程序运行时间：%f" % time.time().__sub__(startTime))
-        print("调度时间:"+str(GlobalData.CurrentTime))
-       
-        # simulator ------------------------------------------
-        if simulate:
-            PP_v = PP.GlobalData.ComplateCount-PP_CompPre
-            if PP_v > PP_RunV:
-                PP_CarMax = PP_roadCarCount
-                PP_RunV = PP_v
-            PP_CompPre = PP.GlobalData.ComplateCount
-
-            print("PP当前道路中的车辆：%d" % PP_roadCarCount)
-            print("PP车库中的车辆：%d" % PP_crossCarCount)
-            print("PP到达终点车辆：%d" % PP.GlobalData.ComplateCount)
-            print("PP到达量：%d  最大值：%d  最大值时道路承载量：%d  车辆综合检查: %d" % (PP_v, PP_RunV, PP_CarMax, PP_roadCarCount+crossCarCount+PP.GlobalData.ComplateCount))
-            print("PP程序运行时间：%f" % time.time().__sub__(startTime))
-            print("PP调度时间:"+str(PP.GlobalData.CurrentTime))
+    print("当前道路中的车辆：%d ,车库中的车辆：%d ,到达终点车辆：%d ,调度时间:%d ,程序运行时间：%f" % (
+        roadCarCount,crossCarCount,GlobalData.ComplateCount,GlobalData.CurrentTime,time.time().__sub__(GlobalData.StartTime)),end='\r')
 
 def Frame():    
-    HandleRoad()
-    if simulate:
-        PP.HandleRoad()
-        Checking()
-    HandleCross()
-    if simulate:
-        PP.HandleCross()
-        Checking()
-        Checking_car()
-    HandleGarage()
-    if simulate:
-        PP.HandleGarage()
-        Checking()
-
-def Checking_car():
-    for carID in GlobalData.carsByID:
-        car1= GlobalData.carsByID[carID]
-        car2=PP.GlobalData.carsByID[carID]
-        if car1.etime != car2.etime:
-            print(carID)
-
-def Checking():
-    for roadID in GlobalData.roadsByID: 
-        road1=GlobalData.roadsByID[roadID]
-        road2=PP.GlobalData.roadsByID[roadID]
-        if  road1.GetHash() != road2.GetHash():
-            for roaddir in road1.channels:
-                road1.RoadPrint(roaddir,True)
-                road2.RoadPrint(roaddir,True)
-                
-            # raise RuntimeError("not sync") 
+    status=HandleRoad()
+    if status==-1:return status
+    status=HandleCross()
+    Info()
+    if status==-1:return status
+    status=HandleGarage()
+    Info()
+    if status==-1:return status
+        
+    return 0
 
 def HandleRoad():
-    # # print("handle roads")
     for road in GlobalData.roads:
-        road.CarRun(True)
+        status=road.CarRun(True)
+        if status==-1:return status
+    return 0
 
 
 def HandleCross():
@@ -210,23 +177,31 @@ def HandleCross():
         for cross in GlobalData.crosses:
             if cross.FrameComplete:
                 continue
-            cross.CarRun(count)
+            status=cross.CarRun(count)
+            if status==-1:return status
             if cross.FrameComplete:
                 complete-=1
 
 
 def HandleGarage():
-    max = 500 - GlobalData.Car_Road
-    if GlobalData.Car_Road > 500:
+    max = GlobalData.MaxInRoad - GlobalData.Car_Road
+    if GlobalData.Car_Road > GlobalData.MaxInRoad:
         max = 0
-    else:
-        if max <= 0:
-            max = 64
-
-    every = int(max / 64.0)
-
-    # if GlobalData.ComplateCount > len(GlobalData.cars) * 0.8:
-    #     every+=100
+    
+    ls = []
+    for cross in GlobalData.crosses:
+        if len(cross.Garage)>0:
+            ls.append(cross)
+    if len(ls)==0:
+        return 0
+    every = int(max / len(ls))
+    rest = max % len(ls)    
+    cc = random.sample(list(GlobalData.crosses),rest)
 
     for cross in GlobalData.crosses:
-        cross.GoRoad(every)
+        count = every
+        if cross in cc:
+            count+=1
+        if cross in ls:
+            status=cross.GoRoad(count)
+            if status==-1:return status

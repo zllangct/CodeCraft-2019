@@ -22,12 +22,17 @@ class globalData:
     # 当前车库车辆
     Car_Garage = 0
 
+    MaxInRoad = 500
+
+    StartTime = 0
 
     Map = CrossMap.CrossMap()
     DistancePre = {}
     Result = list([])
     LastFrame = None
-
+    RollbackAction={}
+    Change={}
+    ChangeTemp={}
     def CarComplete(self, car):
         self.ComplateCount += 1
         if self.ComplateCount == len(self.cars):

@@ -36,9 +36,9 @@ class Car:
         self.location = "garage"
         self.CurrentRoad = None
         self.CurrentCross = None
+        self.RefCount =0
         
         self.Path = None
-        self.PathTemp = []
         self.PathPassing = []
         self.CrossPassing = []
         self.uniqueInfo = {}       
@@ -51,7 +51,7 @@ class Car:
         if self.LastFrame ==None: 
             self.LastFrame=copy.copy(self)
 
-        self.LastFrame.stime =        self.LastFrame.stime  
+        self.LastFrame.stime =        self.stime  
         self.LastFrame.etime =        self.etime  
         self.LastFrame.state =        self.state 
         self.LastFrame.isComplate =   self.isComplate 
@@ -63,9 +63,9 @@ class Car:
         self.LastFrame.CurrentRoad =  self.CurrentRoad 
         self.LastFrame.CurrentCross = self.CurrentCross
         self.LastFrame.LastFrameTime = self.LastFrameTime
+        self.LastFrame.RefCount =self.RefCount
 
         self.LastFrame.Path = copy.copy(self.Path)
-        self.LastFrame.PathTemp = copy.copy(self.PathTemp)
         self.LastFrame.PathPassing = copy.copy(self.PathPassing)
         self.LastFrame.CrossPassing = copy.copy(self.CrossPassing)
         self.LastFrame.uniqueInfo = copy.deepcopy(self.uniqueInfo)
@@ -73,7 +73,6 @@ class Car:
 
 
     def BackFrame(self):
-        if self.LastFrameTime > -1 and self.LastFrameTime == golablData.GlobalData.CurrentTime:
             self.stime =        self.LastFrame.stime  
             self.etime =        self.LastFrame.etime  
             self.state =        self.LastFrame.state 
@@ -86,9 +85,9 @@ class Car:
             self.CurrentRoad =  self.LastFrame.CurrentRoad 
             self.CurrentCross = self.LastFrame.CurrentCross
             self.LastFrameTime = self.LastFrame.LastFrameTime
+            self.RefCount =     self.LastFrame.RefCount
 
             self.Path = self.LastFrame.Path
-            self.PathTemp = self.LastFrame.PathTemp
             self.PathPassing = self.LastFrame.PathPassing
             self.CrossPassing = self.LastFrame.CrossPassing
             self.uniqueInfo =  self.LastFrame.uniqueInfo
@@ -116,13 +115,6 @@ class Car:
             self.waitingTime += 1
         else:
             self.waitingTime = 0
-
-    def PrintPath(self):
-        for ii in self.PathTemp:
-            sstr = ""
-            for pathNode in ii:
-                sstr += " "+str(pathNode.ID)
-            # print(sstr+"  当前节点：%d" % self.CurrentCross.ID + "  当前道路：%d——%d" %(self.CurrentRoad.startID, self.CurrentRoad.endID))
 
     def AddBlocking(self, roadID):
         if not "block" in self.uniqueInfo:
@@ -159,12 +151,6 @@ class Car:
             if p == None:
                 return
             self.Path = p
-            self.PathTemp.append(self.Path.copy())
-
-            # debug TODO
-            debugPrint = False
-            if debugPrint:
-                self.PrintPath()
 
     def NextCross(self):
         if len(self.Path) > 0:
@@ -190,7 +176,9 @@ class Car:
 
         self.AddVPassing(v)
         self.ChangeState(CarState.ActionEnd)
+
         self.CarAction("move")
+
 
     def EnterRoad(self, road, dir, chanIndex, carIndex):
         # 离开之前道路
@@ -208,6 +196,7 @@ class Car:
 
         # 进入终止状态
         self.state = CarState.ActionEnd
+        self.RefCount =0
 
     def OutRoad(self):
         if self.CurrentRoad != None:

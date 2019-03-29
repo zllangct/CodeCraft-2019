@@ -92,3 +92,15 @@ class TextIO:
             #     sstr = "("+ sstr+")"
             #     f.write(sstr)
             f.write(answer)
+
+    def ReadTemp(self,temp_path):
+        if not os.path.exists(temp_path):
+            return 1000000,1000000,0,500
+        with open(temp_path, "r") as f1:
+            lines = f1.readlines()
+            keys= lines[0].split(",")
+            return int(keys[0]),int(keys[1]),int(keys[2]),int(keys[3])
+
+    def WriteTemp(self,temp_path,time,total_time,seed,maxc):
+        with open(temp_path, "wt") as f:
+            f.write("%d,%d,%d,%d"%(time,total_time,seed,maxc))

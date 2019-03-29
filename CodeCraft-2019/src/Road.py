@@ -162,9 +162,6 @@ class Road:
                 continue
 
             if isNewFrame:
-                if car.LastFrameTime < golablData.GlobalData.CurrentTime:
-                    car.TempFrame()
-                    car.LastFrameTime = golablData.GlobalData.CurrentTime
                 car.state = Car.CarState.WaitingRun
 
             if car.state == Car.CarState.ActionEnd:
@@ -175,10 +172,12 @@ class Road:
             # 检查是否出路口
             isOut = car.CheckingFrontCross()
 
-            # 检查是否到达终点
-            # isDestination = car.CheckingDestination()
-            # if isDestination and not isFront and isOut:
-            #     car.CarComplete()
+            if not isFront and isOut and car.RefCount == 0:
+                targetRoad=car.NextRoad()
+                targetCross=car.NextCross()
+                if targetRoad != None and  targetRoad.CarCount[targetCross.ID] > targetRoad.chanCount * targetRoad.len / 1.5:  # 1.5 最佳
+                    car.AddBlocking(targetRoad.ID)
+                    car.PathPlanning(car.CurrentCross, True)
 
             # 正常行驶
             if not isFront:
@@ -215,6 +214,7 @@ class Road:
         car, _ = self.GetCarWaiting(cross.ID)
         if car == None:
             return False
+        car.RefCount +=1
         nextCross = car.NextCross()
         e= car.CheckingDestination()
         if e:
