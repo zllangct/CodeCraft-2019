@@ -6,6 +6,7 @@ import CrossMap
 import dijkstra
 import time
 import copy,sys,random
+import logging
 
 def Process(car_path, road_path, cross_path, answer_path,temp_path):
     # print("program start...")
@@ -57,28 +58,21 @@ def Process(car_path, road_path, cross_path, answer_path,temp_path):
 
         BackData()
         TempData()
-        if status == 0:
-            GlobalData.MaxInRoad+=100
-            seed = time.time()
-            # seed = 1553857603
-            random.seed(seed)
-            GlobalData.Change={}
-            GlobalData.ChangeTemp={}
-        else:
-            GlobalData.MaxInRoad-=100
-            GlobalData.ChangeTemp= copy.deepcopy(GlobalData.Change)
 
-
-        GlobalData.MaxInRoad=1800
-
-        
-        
+        seed = time.time()
+        # seed = 1553857603
+        random.seed(seed)
+        GlobalData.Change={}
+        GlobalData.ChangeTemp={}
+        GlobalData.MaxInRoad=6000
+          
         print("-------种子：%d 最大行车量：%d 最好成绩：%d------------------------------------------------------------------------" % (
             seed,GlobalData.MaxInRoad,tTime))
         status,t,tt= Loop()
         if status == -1:
             continue
 
+        logging.info("%d,%d,%d,%d"%(t,tt,seed,GlobalData.MaxInRoad))
         if t<tTime or t==tTime and tt<tTotalTime:
             input.WriteTemp(temp_path,t,tt,seed,GlobalData.MaxInRoad) 
             tTime=t
@@ -93,6 +87,8 @@ def Process(car_path, road_path, cross_path, answer_path,temp_path):
         GlobalData.Result = result
 
         input.Write(GlobalData.Result)
+
+        # break
 
 def TempData():
     for road in GlobalData.roads:

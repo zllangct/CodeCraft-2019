@@ -10,10 +10,12 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 def main():
-    config ="./1-map-training-1/"
+    # config ="./1-map-training-1/"
     # config ="./1-map-training-2/"
     # config ="./1-map-training-3/"
     # config ="./1-map-training-4/"
+    # config ="./1-map-exam-1/"
+    config ="./1-map-exam-2/"
     # config ="./config/"
     car_path = config+"car.txt"
     road_path = config+"road.txt"
@@ -31,10 +33,10 @@ def main():
         cross_path = sys.argv[3]
         answer_path = sys.argv[4]
 
-    logging.info("car_path is %s" % (car_path))
-    logging.info("road_path is %s" % (road_path))
-    logging.info("cross_path is %s" % (cross_path))
-    logging.info("answer_path is %s" % (answer_path))
+    # logging.info("car_path is %s" % (car_path))
+    # logging.info("road_path is %s" % (road_path))
+    # logging.info("cross_path is %s" % (cross_path))
+    # logging.info("answer_path is %s" % (answer_path))
 
     processing.Process(car_path, road_path, cross_path, answer_path,temp_path) 
 

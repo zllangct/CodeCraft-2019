@@ -109,8 +109,10 @@ class Road:
 
         # 承载量
         if self.CarCount[target.ID] > self.len*self.chanCount * 0.6:
-            initWeight += int(self.CarCount[target.ID] -
-                              self.len*self.chanCount / 2.0) ** 2
+            initWeight +=(int(self.CarCount[target.ID]) * 2 + int(self.CarCount[target.ID] -
+                              self.len*self.chanCount / 2.0) ** 2)
+        else:
+            initWeight += int(self.CarCount[target.ID]) * 2
 
         # 车道数量
         initWeight += (5 - self.chanCount) * 3

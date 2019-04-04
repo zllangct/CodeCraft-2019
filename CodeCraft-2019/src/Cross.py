@@ -193,7 +193,6 @@ class Cross:
                     if roadD != None and roadD.CheckingOutDir(self, targetCross.ID):
                         # 如果有冲突，则暂时调度，切换到下一条道路
                         break
-
                 # 记录车辆所在车道
                 chanIndex = car_waiting.ChanIndex
                 # 没有冲突，行驶车辆,过路口
@@ -268,9 +267,10 @@ class Cross:
             #     break
             if car.startID != self.ID:
                 raise RuntimeError("invalid car") 
-            if car.ID in golablData.GlobalData.ChangeTemp:
-                car.AddBlocking(golablData.GlobalData.ChangeTemp[car.ID])
-                car.PathPlanning(car.GetStart(), True)
+
+            # if car.ID in golablData.GlobalData.ChangeTemp:
+            #     car.AddBlocking(golablData.GlobalData.ChangeTemp[car.ID])
+            #     car.PathPlanning(car.GetStart(), True)
 
             # 规划路线
             car.PathPlanning(car.GetStart(), True)
@@ -296,7 +296,7 @@ class Cross:
                 roadCount -= 1 
                 roadBlock.append(road.ID)
                 waitCars.append(car)
-                break 
+                continue 
 
             # 进入道路
             canEnter,neenWait = road.CarEnter(car, crossTemp.ID)
@@ -304,7 +304,7 @@ class Cross:
                 roadCount -= 1
                 roadBlock.append(road.ID)
                 waitCars.append(car)
-                break
+                continue
 
             # 上路时间
             car.stime = golablData.GlobalData.CurrentTime
